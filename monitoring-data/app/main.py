@@ -31,4 +31,4 @@ if __name__ == '__main__':
     ATHENA.close_connection()
     DB_WRITE.close_connection()
     TIME.get_time()
-    LOGGER.info('Process ended successed.')
+    LOGGER.info('Process ended successfully.')
