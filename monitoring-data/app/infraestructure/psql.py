@@ -95,5 +95,7 @@ class Database:
         """
         Method that close connection to postgresql database.
         """
-        self.log.info('Close connection DB : %s/%s', self.conf.host, self.conf.name)
+        self.log.info('Close connection DB : %s/%s',
+                      self.conf.host,
+                      self.conf.name)
         self.connection.close()

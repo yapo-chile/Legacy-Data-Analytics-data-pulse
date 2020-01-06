@@ -21,7 +21,9 @@ class Athena:
         """
         Method that get connection to S3 Bucket.
         """
-        self.log.info('get_connection S3 %s%s', self.conf.s3_bucket, self.conf.user)
+        self.log.info('get_connection S3 %s%s',
+                      self.conf.s3_bucket,
+                      self.conf.user)
         s3_staging_dir = self.conf.s3_bucket + self.conf.user
         self.connection = connect(aws_access_key_id=self.conf.access_key,
                                   aws_secret_access_key=self.conf.secret_key,
