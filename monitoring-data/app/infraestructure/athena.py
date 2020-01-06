@@ -7,17 +7,13 @@ class Athena:
     """
     Class that extract data from Athena database
     """
-    def __init__(self, s3_bucket, user, aws_key, aws_secret, region):
+    def __init__(self, conf):
         self.log = logging.getLogger('athena')
         date_format = """%(asctime)s,%(msecs)d %(levelname)-2s """
         info_format = """[%(filename)s:%(lineno)d] %(message)s"""
         log_format = date_format + info_format
         logging.basicConfig(format=log_format, level=logging.INFO)
-        self.s3_bucket = s3_bucket
-        self.user = user
-        self.aws_key = aws_key
-        self.aws_secret = aws_secret
-        self.region = region
+        self.conf = conf
         self.connection = None
         self.get_connection()
 
@@ -25,12 +21,12 @@ class Athena:
         """
         Method that get connection to S3 Bucket.
         """
-        self.log.info('get_connection S3 %s%s', self.s3_bucket, self.user)
-        s3_staging_dir = self.s3_bucket + self.user
-        self.connection = connect(aws_access_key_id=self.aws_key,
-                                  aws_secret_access_key=self.aws_secret,
+        self.log.info('get_connection S3 %s%s', self.conf.s3_bucket, self.conf.user)
+        s3_staging_dir = self.conf.s3_bucket + self.conf.user
+        self.connection = connect(aws_access_key_id=self.conf.access_key,
+                                  aws_secret_access_key=self.conf.secret_key,
                                   s3_staging_dir=s3_staging_dir,
-                                  region_name=self.region)
+                                  region_name=self.conf.region)
 
     def get_data(self, query):
         """
@@ -45,5 +41,5 @@ class Athena:
         """
         Method that close connection to S3 Bucket
         """
-        self.log.info('Close Athena %s%s', self.s3_bucket, self.user)
+        self.log.info('Close Athena %s%s', self.conf.s3_bucket, self.conf.user)
         self.connection.close()

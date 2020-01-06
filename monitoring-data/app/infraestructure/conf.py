@@ -12,7 +12,7 @@ class AppConfig:
     """
 
     @environ.config(prefix="PULSE")
-    class PulseConfig:
+    class AthenaConfig:
         """
         PulseConfig class represeting the configuration to access
         pulse service
@@ -40,5 +40,8 @@ class AppConfig:
         user: str = INI_DB.secret(name="user", default=environ.var())
         password: str = INI_DB.secret(name="password", default=environ.var())
         table: str = environ.var("dm_pulse.monitoring_events")
-    athena = environ.group(PulseConfig)
+    athenaConf = environ.group(AthenaConfig)
     db = environ.group(DBConfig)
+
+def getConf():
+    return environ.to_config(AppConfig)

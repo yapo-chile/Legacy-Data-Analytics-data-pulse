@@ -8,17 +8,13 @@ class Database:
     """
     Class that allow do operations with postgresql database.
     """
-    def __init__(self, host, port, dbname, user, password):
+    def __init__(self, conf):
         self.log = logging.getLogger('psql')
         date_format = """%(asctime)s,%(msecs)d %(levelname)-2s """
         info_format = """[%(filename)s:%(lineno)d] %(message)s"""
         log_format = date_format + info_format
         logging.basicConfig(format=log_format, level=logging.INFO)
-        self.host = host
-        self.port = port
-        self.dbname = dbname
-        self.user = user
-        self.password = password
+        self.conf = conf
         self.connection = None
         self.get_connection()
 
@@ -26,17 +22,17 @@ class Database:
         """
         Method that return dict with database credentials.
         """
-        return {"host": self.host,
-                "port": self.port,
-                "user": self.user,
-                "password": self.password,
-                "dbname": self.dbname}
+        return {"host": self.conf.host,
+                "port": self.conf.port,
+                "user": self.conf.user,
+                "password": self.conf.password,
+                "dbname": self.conf.name}
 
     def get_connection(self):
         """
         Method that returns database connection.
         """
-        self.log.info('get_connection DB %s/%s', self.host, self.dbname)
+        self.log.info('get_connection DB %s/%s', self.conf.host, self.conf.name)
         self.connection = psycopg2.connect(**self.database_conf())
         self.connection.set_client_encoding('UTF-8')
 
@@ -99,5 +95,5 @@ class Database:
         """
         Method that close connection to postgresql database.
         """
-        self.log.info('Close connection DB : %s/%s', self.host, self.dbname)
+        self.log.info('Close connection DB : %s/%s', self.conf.host, self.conf.name)
         self.connection.close()
