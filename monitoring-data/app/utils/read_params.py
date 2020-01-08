@@ -12,7 +12,6 @@ class ReadParams:
         self.str_parse_params = str_parse_params
         self.date_from = None
         self.date_to = None
-        self.configuration_file = None
         self.master = None
         self.logger = logging.getLogger('readParams')
         date_format = """%(asctime)s,%(msecs)d %(levelname)-2s """
@@ -57,12 +56,6 @@ class ReadParams:
         Method that get last_year attribute
         """
         return str(int(self.date_from[0:4]) - 1)
-
-    def get_config_file(self):
-        """
-        Method that get config_file attribute
-        """
-        return self.configuration_file
 
     def get_master(self):
         """
@@ -121,12 +114,9 @@ class ReadParams:
             self.date_to = temp_date.strftime('%Y-%m-%d')
         if self.master is None:
             self.master = 'local'
-        if self.configuration_file is None:
-            self.configuration_file = os.environ.get("CONFIGURATION_FILE")
 
         self.logger.info('Date from : %s', self.date_from)
         self.logger.info('Date to   : %s', self.date_to)
         self.logger.info('Current year : %s', self.get_current_year())
         self.logger.info('Last year : %s', self.get_last_year())
-        self.logger.info('Config file : %s', self.configuration_file)
         self.logger.info('Node : %s', self.master)

@@ -8,8 +8,22 @@ make docker-build
 ```
 
 ### Run micro services
-For only run docker image.
+```
+docker run -v /local-path/secrets/pulse:/app/pulse-secret \
+           -v /local-path/secrets/db-secret:/app/db-secret \
+           -e APP_PULSE_SECRET=/app/pulse-secret \
+           -e APP_DB_SECRET=/app/db-secret \
+           containers.mpi-internal.com/yapo/dp-bounce-rate:[TAG]
+```
+
+### Run micro services with parameters
 
 ```
-make run
+docker run -v /local-path/secrets/pulse:/app/pulse-secret \
+           -v /local-path/secrets/db-secret:/app/db-secret \
+           -e APP_PULSE_SECRET=/app/pulse-secret \
+           -e APP_DB_SECRET=/app/db-secret \
+           containers.mpi-internal.com/yapo/dp-bounce-rate:[TAG] \
+           -date_from=YYYY-MM-DD \
+           -date_to=YYYY-MM-DD
 ```
