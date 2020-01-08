@@ -1,7 +1,6 @@
 import datetime
 from datetime import timedelta
 import logging
-import os
 
 
 class ReadParams:
