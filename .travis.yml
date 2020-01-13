@@ -16,17 +16,16 @@ if: tags IS blank
 before_script:
   - export BUILD_BRANCH=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
   - echo "TRAVIS_BRANCH=$TRAVIS_BRANCH, TRAVIS_PULL_REQUEST=$TRAVIS_PULL_REQUEST, BUILD_BRANCH=$BUILD_BRANCH"
-  - make -C monitoring-data install
+  - make -C bounce-rate install
   
 # script always run to completion (set +e). All of these code checks are must haves
 # in a modern Python project.
 script:
-  - make -C monitoring-data docker-build
-  - make -C monitoring-data check-style
+  - make -C bounce-rate docker-build
+  - make -C bounce-rate check-style
 after_failure:
   - reports-publisher
 
 after_success:
   - reports-publisher
-  - make -C monitoring-data docker-publish
-  - make -C monitoring-data rundeck-deploy
+  - make -C bounce-rate docker-publish
