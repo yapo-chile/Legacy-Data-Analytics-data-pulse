@@ -29,3 +29,4 @@ after_failure:
 after_success:
   - reports-publisher
   - make -C monitoring-data docker-publish
+  - make -C monitoring-data rundeck-deploy
