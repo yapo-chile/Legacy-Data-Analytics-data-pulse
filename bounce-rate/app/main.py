@@ -40,6 +40,6 @@ if __name__ == '__main__':
     logging.basicConfig(format=LOG_FORMAT, level=logging.INFO)
     PARAMS = ReadParams(sys.argv)
     DATA_ATHENA = source_data_pulse(PARAMS, CONFIG)
-    write_data_dwh = write_data_dwh(PARAMS, CONFIG, DATA_ATHENA)
+    write_data_dwh(PARAMS, CONFIG, DATA_ATHENA)
     TIME.get_time()
     LOGGER.info('Process ended successfully.')
