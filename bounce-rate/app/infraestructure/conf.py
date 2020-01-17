@@ -14,7 +14,7 @@ class AppConfig:
     @environ.config(prefix="PULSE")
     class AthenaConfig:
         """
-        PulseConfig class represeting the configuration to access
+        AthenaConfig class represeting the configuration to access
         pulse service
         """
         s3_bucket: str = INI_PULSE.secret(
