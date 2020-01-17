@@ -2,6 +2,7 @@
 # utf-8
 import sys
 import logging
+import pandas as pd
 from infraestructure.athena import Athena
 from infraestructure.conf import getConf
 from infraestructure.psql import Database
