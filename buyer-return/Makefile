@@ -50,3 +50,7 @@ install:
 # Execute style tests
 check-style:
 	@scripts/commands/check-style.sh
+
+# deploys job to Rundeck
+rundeck-deploy:
+	@scripts/commands/rundeck-deploy.sh
