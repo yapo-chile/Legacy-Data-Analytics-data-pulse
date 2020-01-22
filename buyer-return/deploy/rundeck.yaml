@@ -6,9 +6,9 @@
                         -e APP_DB_SECRET=/app/db-secret \
                         containers.mpi-internal.com/yapo/data-pulse-buyer-return:latest
   executionEnabled: true
-  group: DOCKER/PULSE
+  group: GLOBAL-METRIC
   loglevel: DEBUG
-  name: Pulse - Project Name Template
+  name: Buyer return over current past
   nodeFilterEditable: false
   nodefilters:
     dispatch:
