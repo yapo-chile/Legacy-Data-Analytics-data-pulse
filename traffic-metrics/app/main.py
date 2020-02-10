@@ -87,9 +87,9 @@ if __name__ == '__main__':
     DATA_TRAFFIC_METRICS = source_traffic_metrics(PARAMS, CONFIG)
     DATA_UNIQUE_LEADS = source_unique_leads(PARAMS, CONFIG)
     write_data_pulse_to_dwh(PARAMS,
-                         CONFIG,
-                         DATA_TRAFFIC_METRICS,
-                         DATA_UNIQUE_LEADS)
+                            CONFIG,
+                            DATA_TRAFFIC_METRICS,
+                            DATA_UNIQUE_LEADS)
     # Get data for aggregations in our data warehouse
     DATA_BUYERS = source_buyers(PARAMS, CONFIG)
     DATA_DAU_PLATFORM = source_dau_platform(PARAMS, CONFIG)
