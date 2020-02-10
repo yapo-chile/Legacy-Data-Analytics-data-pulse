@@ -49,10 +49,10 @@ def source_dau_platform(params: ReadParams,
     return data_dwh
 
 # Write data to data warehouse
-def write_data_pulse2dwh(params: ReadParams,
-                         config: getConf,
-                         data_traffic_metrics: pd.DataFrame,
-                         data_unique_leads: pd.DataFrame) -> None:
+def write_data_pulse_to_dwh(params: ReadParams,
+                            config: getConf,
+                            data_traffic_metrics: pd.DataFrame,
+                            data_unique_leads: pd.DataFrame) -> None:
     query = Query(config, params)
     DB_WRITE = Database(conf=config.db)
     DB_WRITE.execute_command(query.delete_traffic_metrics())
@@ -86,7 +86,7 @@ if __name__ == '__main__':
     # Get data from Pulse and write in our dwh
     DATA_TRAFFIC_METRICS = source_traffic_metrics(PARAMS, CONFIG)
     DATA_UNIQUE_LEADS = source_unique_leads(PARAMS, CONFIG)
-    write_data_pulse2dwh(PARAMS,
+    write_data_pulse_to_dwh(PARAMS,
                          CONFIG,
                          DATA_TRAFFIC_METRICS,
                          DATA_UNIQUE_LEADS)

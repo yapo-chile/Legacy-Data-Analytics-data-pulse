@@ -12,1039 +12,432 @@ class Query:
         self.params = params
         self.conf = conf
 
+
+    def get_query_fields(self, query_case: str) -> str:
+        """
+        Method return that string with an fieldof query
+        """
+        field = ""
+        if query_case == 'timedate':
+            field = """
+            cast(date_parse(cast(year as varchar) || '-' ||
+                cast(month as varchar) || '-' ||
+                cast(day as varchar),'%Y-%c-%e') as date) timedate,
+            """
+        elif query_case == 'platform':
+            field = """
+            case when (device_type = 'desktop'
+                    and (object_url like '%www2.yapo.cl%' or object_url like '%//yapo.cl%'))
+                    or product_type = 'Web' or object_url like '%www.yapo.cl%' or (device_type = 'desktop' and product_type = 'unknown') then 'Web'
+                when ((device_type = 'mobile' or device_type = 'tablet')
+                    and (object_url like '%www2.yapo.cl%' or object_url like '%//yapo.cl%'))
+                    or product_type = 'M-Site' or object_url like '%m.yapo.cl%' or ((device_type = 'mobile' or device_type = 'tablet') and product_type = 'unknown') then 'MSite'
+                when ((device_type = 'mobile' or device_type = 'tablet')
+                    and object_url is not null and product_type = 'AndroidApp')
+                    or product_type = 'AndroidApp' then 'AndroidApp'
+                when ((device_type = 'mobile' or device_type = 'tablet')
+                    and object_url is not null and product_type = 'iOSApp')
+                    or product_type = 'iOSApp' or product_type = 'iPadApp' then 'iOSApp'
+            end platform,
+            """
+        elif query_case == 'vertical':
+            field = """
+            case when local_main_category in ('vehiculos',
+                                              'vehículos',
+                                              'veh�culos') then 'Motor' 
+                when local_category_level1 in ('arriendo de temporada')
+                    and local_main_category in ('inmuebles') then 'Holiday Rental'
+                when local_category_level1 in ('ofertas de empleo')
+                    and local_main_category in ('servicios',
+                                                'servicios negocios y empleo',
+                                                'servicios, negocios y empleo',
+                                                'servicios,negocios y empleo') then 'Jobs'
+                when local_main_category in ('computadores & electrónica',
+                                             'computadore & electronica',
+                                             'computadores & electr�nica',
+                                             'computadores y electronica',
+                                             'futura mamá','futura mam�',
+                                             'futura mama bebes y ninos',
+                                             'futura mamá bebés y niños',
+                                             'futura mamá, bebés y niños',
+                                             'futura mamá,bebés y niños',
+                                             'futura mam� beb�s y ni�os',
+                                             'futura mam�,beb�s y ni�os',
+                                             'hogar',
+                                             'moda',
+                                             'moda calzado belleza y salud',
+                                             'moda, calzado, belleza y salud',
+                                             'moda,calzado,belleza y salud',
+                                             'otros',
+                                             'otros productos',
+                                             'other',
+                                             'tiempo libre') then 'Consumer Goods'
+                when local_category_level1 in ('busco empleo',
+                                               'servicios',
+                                               'negocios,maquinaria y construccion',
+                                               'negocios maquinaria y construccion',
+                                               'negocios maquinaria y construcción',
+                                               'negocios maquinaria y construcci髇',
+                                               'negocios maquinaria y construcci�n',
+                                               'negocios, maquinaria y construcción')
+                        and local_main_category in ('servicios',
+                                                    'servicios negocios y empleo',
+                                                    'servicios, negocios y empleo',
+                                                    'servicios,negocios y empleo') then 'Professional Services'
+                when local_category_level1 in ('arrendar',
+                                               'arriendo',
+                                               'comprar')
+                    and local_main_category in ('inmuebles') then 'Real Estate'
+                when local_main_category in ('unknown','undefined') then 'Undefined'
+                else 'Undefined'
+            end vertical,
+            """
+        elif query_case == 'main_category':
+            field = """
+            case when local_main_category in ('computadores & electrónica',
+                                              'computadore & electronica',
+                                              'computadores & electr?nica',
+                                              'computadores y electronica')
+                                              then 'Computadores & electrónica'
+                when local_main_category in ('futura mamá',
+                                             'futura mam?',
+                                             'futura mama bebes y ninos',
+                                             'futura mamá bebés y niños',
+                                             'futura mamá, bebés y niños',
+                                             'futura mamá,bebés y niños',
+                                             'futura mam? beb?s y ni?os',
+                                             'futura mam?,beb?s y ni?os')
+                                             then 'Futura mamá, bebés y niños'
+                when local_main_category in ('hogar') then 'Hogar'
+                when local_main_category in ('inmuebles') then 'Inmuebles'
+                when local_main_category in ('moda',
+                                             'moda calzado belleza y salud',
+                                             'moda, calzado, belleza y salud',
+                                             'moda,calzado,belleza y salud')
+                                             then 'Moda, calzado, belleza y salud'
+                when local_main_category in ('otros',
+                                             'otros productos',
+                                             'other') then 'Otros'
+                when local_main_category in ('servicios',
+                                             'servicios negocios y empleo',
+                                             'servicios, negocios y empleo',
+                                             'servicios,negocios y empleo')
+                                             then 'Servicios, negocios y empleo'
+                when local_main_category in ('tiempo libre')
+                                             then 'Tiempo libre'
+                when local_main_category in ('vehiculos',
+                                             'vehículos',
+                                             'veh?culos',
+                                             'vehï¿œculos')
+                                             then 'Vehículos'
+                when local_main_category in ('unknown','undefined') then 'Undefined'
+                when local_main_category is null then 'Undefined'
+                else 'Undefined'
+            end main_category,
+            """
+        elif query_case == 'active_users_that_do_adviews':
+            field = """
+            count(distinct case when event_type = 'View'
+                and object_type = 'ClassifiedAd'
+                then environment_id end) active_users_that_do_adviews,
+            """
+        elif query_case == 'traffic_channel':
+            field = """
+            case when traffic_channel = 'Direct' then 'Direct'
+                when traffic_channel = 'SEO' then 'SEO'
+                when traffic_channel in ('Social Media',
+                                         'Social Media Paid',
+                                         'Paid search',
+                                         'Display') then 'Sponsored Links'
+                when traffic_channel in ('Affiliates','Email marketing','unknown') then 'Others'
+            end traffic_channel,
+            """
+        return field
+
     def query_traffic_metrics(self) -> str:
         """
         Method return str with query
         """
         query = """
         select
-            cast(date_parse(cast(year as varchar) || '-' || 
-            cast(month as varchar) || '-' ||
-            cast(day as varchar),'%Y-%c-%e') as date) timedate,
+            {1}
             'All Yapo' platform,
             'All Yapo' traffic_channel,
             'All Yapo' vertical,
             'All' main_category,
             count(distinct environment_id) active_users,
             count(distinct session_id) sessions,
-            count(distinct case when event_type = 'View' and
-            object_type = 'ClassifiedAd' then environment_id end)
-            active_users_that_do_adviews,
-            count(distinct case when event_type in ('Call','SMS','Send','Show')
-            then environment_id end) active_users_that_do_leads
+            {5}
+            count(distinct case when event_type in ('Call',
+                                                    'SMS',
+                                                    'Send',
+                                                    'Show')
+                                                    then environment_id end) active_users_that_do_leads
         from
             yapocl_databox.insights_events_behavioral_fact_layer_365d
         where
-            cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) = date '{0}'
+            cast(date_parse(cast(year as varchar) || '-' || 
+                cast(month as varchar) || '-' ||
+                cast(day as varchar),'%Y-%c-%e') as date) = date '{0}'
         group by 1,2,3,4,5
             union all
         select
-            cast(date_parse(cast(year as varchar) || '-' || 
-            cast(month as varchar) || '-' ||
-            cast(day as varchar),'%Y-%c-%e') as date) timedate,
-            case when (device_type = 'desktop' and (object_url like
-                '%www2.yapo.cl%' or object_url like '%//yapo.cl%')) or
-                product_type = 'Web' or object_url like '%www.yapo.cl%'
-                or (device_type = 'desktop' and product_type = 'unknown')
-            then 'Web'
-                when ((device_type = 'mobile' or device_type = 'tablet')
-                and (object_url like '%www2.yapo.cl%' or object_url
-                like '%//yapo.cl%')) or product_type = 'M-Site'
-                or object_url like '%m.yapo.cl%' or ((device_type =
-                'mobile' or device_type = 'tablet') and product_type
-                = 'unknown')
-            then 'MSite'
-                when ((device_type = 'mobile' or device_type = 'tablet')
-                and object_url is not null and product_type = 'AndroidApp')
-                or product_type = 'AndroidApp'
-            then 'AndroidApp'
-                when ((device_type = 'mobile' or device_type = 'tablet')
-                and object_url is not null and product_type = 'iOSApp')
-                or product_type = 'iOSApp' or product_type = 'iPadApp'
-            then 'iOSApp'
-            end platform,
-            case when traffic_channel = 'Direct' then 'Direct'
-                when traffic_channel = 'SEO' then 'SEO'
-                when traffic_channel in ('Social Media',
-                                         'Social Media Paid',
-                                         'Paid search',
-                                         'Display') 
-            then 'Sponsored Links'
-                when traffic_channel in ('Affiliates',
-                                         'Email marketing',
-                                         'unknown')
-            then 'Others'
-            end traffic_channel,
-            case when local_main_category in ('vehiculos',
-                                              'vehículos',
-                                              'veh�culos')
-            then 'Motor'
-                when local_category_level1 in ('arriendo de temporada')
-                and local_main_category in ('inmuebles') then 'Holiday Rental'
-                when local_category_level1 in ('ofertas de empleo') and
-                local_main_category in ('servicios',
-                                        'servicios negocios y empleo',
-                                        'servicios, negocios y empleo',
-                                        'servicios,negocios y empleo')
-                then 'Jobs'
-                when local_main_category in ('computadores & electrónica',
-                                             'computadore & electronica',
-                                             'computadores & electr�nica',
-                                             'computadores y electronica',
-                                             'futura mamá',
-                                             'futura mam�',
-                                             'futura mama bebes y ninos',
-                                             'futura mamá bebés y niños',
-                                             'futura mamá, bebés y niños',
-                                             'futura mamá,bebés y niños',
-                                             'futura mam� beb�s y ni�os',
-                                             'futura mam�,beb�s y ni�os',
-                                             'hogar',
-                                             'moda',
-                                             'moda calzado belleza y salud',
-                                             'moda, calzado, belleza y salud',
-                                             'moda,calzado,belleza y salud',
-                                             'otros',
-                                             'otros productos',
-                                             'other',
-                                             'tiempo libre')
-                then 'Consumer Goods'
-                when local_category_level1 in ('busco empleo',
-                                               'servicios',
-                                               'negocios,maquinaria y construccion',
-                                               'negocios maquinaria y construccion',
-                                               'negocios maquinaria y construcción',
-                                               'negocios maquinaria y construcci髇',
-                                               'negocios maquinaria y construcci�n',
-                                               'negocios, maquinaria y construcción')
-                    and local_main_category in ('servicios',
-                                                'servicios negocios y empleo',
-                                                'servicios, negocios y empleo',
-                                                'servicios,negocios y empleo')
-                then 'Professional Services'
-                when local_category_level1 in ('arrendar','arriendo','comprar')
-                and local_main_category in ('inmuebles') then 'Real Estate'
-                when local_main_category in ('unknown','undefined')
-                then 'Undefined'
-                else 'Undefined'
-            end vertical,
-            case when local_main_category in ('computadores & electrónica',
-                                              'computadore & electronica',
-                                              'computadores & electr?nica',
-                                              'computadores y electronica')
-            then 'Computadores & electrónica'
-                when local_main_category in ('futura mamá',
-                                             'futura mam?',
-                                             'futura mama bebes y ninos',
-                                             'futura mamá bebés y niños',
-                                             'futura mamá, bebés y niños',
-                                             'futura mamá,bebés y niños',
-                                             'futura mam? beb?s y ni?os',
-                                             'futura mam?,beb?s y ni?os')
-            then 'Futura mamá, bebés y niños'
-                when local_main_category in ('hogar') then 'Hogar'
-                when local_main_category in ('inmuebles') then 'Inmuebles'
-                when local_main_category in ('moda',
-                                             'moda calzado belleza y salud',
-                                             'moda, calzado, belleza y salud',
-                                             'moda,calzado,belleza y salud')
-            then 'Moda, calzado, belleza y salud'
-                when local_main_category in ('otros',
-                                             'otros productos',
-                                             'other')
-            then 'Otros'
-                when local_main_category in ('servicios',
-                                             'servicios negocios y empleo',
-                                             'servicios, negocios y empleo',
-                                             'servicios,negocios y empleo')
-            then 'Servicios, negocios y empleo'
-                when local_main_category in ('tiempo libre')
-            then 'Tiempo libre'
-                when local_main_category in ('vehiculos',
-                                             'vehículos',
-                                             'veh?culos',
-                                             'vehï¿œculos')
-            then 'Vehículos'
-                when local_main_category in ('unknown','undefined')
-                then 'Undefined'
-                when local_main_category is null then 'Undefined'
-                else 'Undefined'
-            end main_category,
+            {1}
+            {2}
+            {6}
+            {3}
+            {4}
             count(distinct environment_id) active_users,
             count(distinct session_id) sessions,
-            count(distinct case when event_type = 'View' and
-            object_type = 'ClassifiedAd' then environment_id end)
-            active_users_that_do_adviews,
-            count(distinct case when event_type in ('Call','SMS','Send','Show')
-            then environment_id end) active_users_that_do_leads
+            {5}
+            count(distinct case when event_type in ('Call',
+                                                    'SMS',
+                                                    'Send',
+                                                    'Show')
+                                                    then environment_id end) active_users_that_do_leads
         from
             yapocl_databox.insights_events_behavioral_fact_layer_365d
         where
-            cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) = date '{0}'
+            cast(date_parse(cast(year as varchar) || '-' || 
+                cast(month as varchar) || '-' ||
+                cast(day as varchar),'%Y-%c-%e') as date) = date '{0}'
             and product_type is not null
         group by 1,2,3,4,5
             union all
         select
-            cast(date_parse(cast(year as varchar) || '-' || 
-            cast(month as varchar) || '-' ||
-            cast(day as varchar),'%Y-%c-%e') as date) timedate,
-            case when (device_type = 'desktop' and (object_url like
-            '%www2.yapo.cl%' or object_url like '%//yapo.cl%')) or
-            product_type = 'Web' or object_url like '%www.yapo.cl%'
-            or (device_type = 'desktop' and product_type = 'unknown') then 'Web'
-                when ((device_type = 'mobile' or device_type = 'tablet')
-                and (object_url like '%www2.yapo.cl%' or object_url
-                like '%//yapo.cl%')) or product_type = 'M-Site'
-                or object_url like '%m.yapo.cl%' or ((device_type =
-                'mobile' or device_type = 'tablet') and product_type
-                = 'unknown')
-            then 'MSite'
-                when ((device_type = 'mobile' or device_type = 'tablet')
-                and object_url is not null and product_type = 'AndroidApp')
-                or product_type = 'AndroidApp'
-            then 'AndroidApp'
-                when ((device_type = 'mobile' or device_type = 'tablet')
-                and object_url is not null and product_type = 'iOSApp')
-                or product_type = 'iOSApp' or product_type = 'iPadApp'
-            then 'iOSApp'
-            end platform,
-            case when traffic_channel = 'Direct' then 'Direct'
-                when traffic_channel = 'SEO' then 'SEO'
-                when traffic_channel in ('Social Media',
-                                         'Social Media Paid',
-                                         'Paid search',
-                                         'Display') 
-            then 'Sponsored Links'
-                when traffic_channel in ('Affiliates',
-                                         'Email marketing',
-                                         'unknown')
-            then 'Others'
-            end traffic_channel,
-            case when local_main_category in ('vehiculos',
-                                              'vehículos',
-                                              'veh�culos')
-            then 'Motor' 
-                when local_category_level1 in ('arriendo de temporada')
-                and local_main_category in ('inmuebles') then 'Holiday Rental' 
-                when local_category_level1 in ('ofertas de empleo') and
-                local_main_category in ('servicios',
-                                        'servicios negocios y empleo',
-                                        'servicios, negocios y empleo',
-                                        'servicios,negocios y empleo')
-                then 'Jobs'
-                when local_main_category in ('computadores & electrónica',
-                                             'computadore & electronica',
-                                             'computadores & electr�nica',
-                                             'computadores y electronica',
-                                             'futura mamá',
-                                             'futura mam�',
-                                             'futura mama bebes y ninos',
-                                             'futura mamá bebés y niños',
-                                             'futura mamá, bebés y niños',
-                                             'futura mamá,bebés y niños',
-                                             'futura mam� beb�s y ni�os',
-                                             'futura mam�,beb�s y ni�os',
-                                             'hogar',
-                                             'moda',
-                                             'moda calzado belleza y salud',
-                                             'moda, calzado, belleza y salud',
-                                             'moda,calzado,belleza y salud',
-                                             'otros',
-                                             'otros productos',
-                                             'other',
-                                             'tiempo libre')
-                then 'Consumer Goods'
-                when local_category_level1 in ('busco empleo',
-                                               'servicios',
-                                               'negocios,maquinaria y construccion',
-                                               'negocios maquinaria y construccion',
-                                               'negocios maquinaria y construcción',
-                                               'negocios maquinaria y construcci髇',
-                                               'negocios maquinaria y construcci�n',
-                                               'negocios, maquinaria y construcción')
-                    and local_main_category in ('servicios',
-                                                'servicios negocios y empleo',
-                                                'servicios, negocios y empleo',
-                                                'servicios,negocios y empleo')
-                then 'Professional Services'
-                when local_category_level1 in ('arrendar','arriendo','comprar')
-                and local_main_category in ('inmuebles') then 'Real Estate'
-                when local_main_category in ('unknown','undefined')
-                then 'Undefined'
-                else 'Undefined'
-            end vertical,
+            {1}
+            {2}
+            {6}
+            {3}
             'All' main_category,
             count(distinct environment_id) active_users,
             count(distinct session_id) sessions,
-            count(distinct case when event_type = 'View' and
-            object_type = 'ClassifiedAd' then environment_id end)
-            active_users_that_do_adviews,
-            count(distinct case when event_type in ('Call','SMS','Send','Show')
-            then environment_id end) active_users_that_do_leads
+            {5}
+            count(distinct case when event_type in ('Call',
+                                                    'SMS',
+                                                    'Send',
+                                                    'Show')
+                                                    then environment_id end) active_users_that_do_leads
         from
             yapocl_databox.insights_events_behavioral_fact_layer_365d
         where
-            cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) = date '{0}'
+            cast(date_parse(cast(year as varchar) || '-' || 
+                cast(month as varchar) || '-' ||
+                cast(day as varchar),'%Y-%c-%e') as date) = date '{0}'
             and product_type is not null
         group by 1,2,3,4,5
             union all
         select
-            cast(date_parse(cast(year as varchar) || '-' || 
-            cast(month as varchar) || '-' ||
-            cast(day as varchar),'%Y-%c-%e') as date) timedate, 
+            {1} 
             'All Yapo' platform,
-            case when traffic_channel = 'Direct' then 'Direct'
-                when traffic_channel = 'SEO' then 'SEO'
-                when traffic_channel in ('Social Media',
-                                         'Social Media Paid',
-                                         'Paid search',
-                                         'Display') 
-            then 'Sponsored Links'
-                when traffic_channel in ('Affiliates',
-                                         'Email marketing',
-                                         'unknown')
-            then 'Others'
-            end traffic_channel,
-            case when local_main_category in ('vehiculos',
-                                              'vehículos',
-                                              'veh�culos')
-            then 'Motor' 
-                when local_category_level1 in ('arriendo de temporada')
-                and local_main_category in ('inmuebles') then 'Holiday Rental' 
-                when local_category_level1 in ('ofertas de empleo') and
-                local_main_category in ('servicios',
-                                        'servicios negocios y empleo',
-                                        'servicios, negocios y empleo',
-                                        'servicios,negocios y empleo')
-                then 'Jobs'
-                when local_main_category in ('computadores & electrónica',
-                                             'computadore & electronica',
-                                             'computadores & electr�nica',
-                                             'computadores y electronica',
-                                             'futura mamá',
-                                             'futura mam�',
-                                             'futura mama bebes y ninos',
-                                             'futura mamá bebés y niños',
-                                             'futura mamá, bebés y niños',
-                                             'futura mamá,bebés y niños',
-                                             'futura mam� beb�s y ni�os',
-                                             'futura mam�,beb�s y ni�os',
-                                             'hogar',
-                                             'moda',
-                                             'moda calzado belleza y salud',
-                                             'moda, calzado, belleza y salud',
-                                             'moda,calzado,belleza y salud',
-                                             'otros',
-                                             'otros productos',
-                                             'other',
-                                             'tiempo libre')
-                then 'Consumer Goods'
-                when local_category_level1 in ('busco empleo',
-                                               'servicios',
-                                               'negocios,maquinaria y construccion',
-                                               'negocios maquinaria y construccion',
-                                               'negocios maquinaria y construcción',
-                                               'negocios maquinaria y construcci髇',
-                                               'negocios maquinaria y construcci�n',
-                                               'negocios, maquinaria y construcción')
-                    and local_main_category in ('servicios',
-                                                'servicios negocios y empleo',
-                                                'servicios, negocios y empleo',
-                                                'servicios,negocios y empleo')
-                then 'Professional Services'
-                when local_category_level1 in ('arrendar','arriendo','comprar')
-                and local_main_category in ('inmuebles') then 'Real Estate'
-                when local_main_category in ('unknown','undefined')
-                then 'Undefined'
-                else 'Undefined'
-            end vertical,
-            case when local_main_category in ('computadores & electrónica',
-                                              'computadore & electronica',
-                                              'computadores & electr?nica',
-                                              'computadores y electronica')
-            then 'Computadores & electrónica'
-                when local_main_category in ('futura mamá',
-                                             'futura mam?',
-                                             'futura mama bebes y ninos',
-                                             'futura mamá bebés y niños',
-                                             'futura mamá, bebés y niños',
-                                             'futura mamá,bebés y niños',
-                                             'futura mam? beb?s y ni?os',
-                                             'futura mam?,beb?s y ni?os')
-            then 'Futura mamá, bebés y niños'
-                when local_main_category in ('hogar') then 'Hogar'
-                when local_main_category in ('inmuebles') then 'Inmuebles'
-                when local_main_category in ('moda',
-                                             'moda calzado belleza y salud',
-                                             'moda, calzado, belleza y salud',
-                                             'moda,calzado,belleza y salud')
-            then 'Moda, calzado, belleza y salud'
-                when local_main_category in ('otros',
-                                             'otros productos',
-                                             'other')
-            then 'Otros'
-                when local_main_category in ('servicios',
-                                             'servicios negocios y empleo',
-                                             'servicios, negocios y empleo',
-                                             'servicios,negocios y empleo')
-            then 'Servicios, negocios y empleo'
-                when local_main_category in ('tiempo libre')
-            then 'Tiempo libre'
-                when local_main_category in ('vehiculos',
-                                             'vehículos',
-                                             'veh?culos',
-                                             'vehï¿œculos')
-            then 'Vehículos'
-                when local_main_category in ('unknown','undefined')
-                then 'Undefined'
-                when local_main_category is null then 'Undefined'
-                else 'Undefined'
-            end main_category,   
+            {6}
+            {3}
+            {4}   
             count(distinct environment_id) active_users,
             count(distinct session_id) sessions,
-            count(distinct case when event_type = 'View' and
-            object_type = 'ClassifiedAd' then environment_id end)
-            active_users_that_do_adviews,
-            count(distinct case when event_type in ('Call','SMS','Send','Show')
-            then environment_id end) active_users_that_do_leads
+            {5}
+            count(distinct case when event_type in ('Call',
+                                                    'SMS',
+                                                    'Send',
+                                                    'Show')
+                                                    then environment_id end) active_users_that_do_leads
         from
             yapocl_databox.insights_events_behavioral_fact_layer_365d
         where
-            cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) = date '{0}'
+            cast(date_parse(cast(year as varchar) || '-' || 
+                cast(month as varchar) || '-' ||
+                cast(day as varchar),'%Y-%c-%e') as date) = date '{0}'
             and product_type is not null
         group by 1,2,3,4,5
             union all
         select
-            cast(date_parse(cast(year as varchar) || '-' || 
-            cast(month as varchar) || '-' ||
-            cast(day as varchar),'%Y-%c-%e') as date) timedate,  
+            {1}  
             'All Yapo' platform,
-            case when traffic_channel = 'Direct' then 'Direct'
-                when traffic_channel = 'SEO' then 'SEO'
-                when traffic_channel in ('Social Media',
-                                         'Social Media Paid',
-                                         'Paid search',
-                                         'Display') 
-            then 'Sponsored Links'
-                when traffic_channel in ('Affiliates',
-                                         'Email marketing',
-                                         'unknown')
-            then 'Others'
-            end traffic_channel,
-            case when local_main_category in ('vehiculos',
-                                              'vehículos',
-                                              'veh�culos')
-            then 'Motor' 
-                when local_category_level1 in ('arriendo de temporada')
-                and local_main_category in ('inmuebles') then 'Holiday Rental' 
-                when local_category_level1 in ('ofertas de empleo') and
-                local_main_category in ('servicios',
-                                        'servicios negocios y empleo',
-                                        'servicios, negocios y empleo',
-                                        'servicios,negocios y empleo')
-                then 'Jobs'
-                when local_main_category in ('computadores & electrónica',
-                                             'computadore & electronica',
-                                             'computadores & electr�nica',
-                                             'computadores y electronica',
-                                             'futura mamá',
-                                             'futura mam�',
-                                             'futura mama bebes y ninos',
-                                             'futura mamá bebés y niños',
-                                             'futura mamá, bebés y niños',
-                                             'futura mamá,bebés y niños',
-                                             'futura mam� beb�s y ni�os',
-                                             'futura mam�,beb�s y ni�os',
-                                             'hogar',
-                                             'moda',
-                                             'moda calzado belleza y salud',
-                                             'moda, calzado, belleza y salud',
-                                             'moda,calzado,belleza y salud',
-                                             'otros',
-                                             'otros productos',
-                                             'other',
-                                             'tiempo libre')
-                then 'Consumer Goods'
-                when local_category_level1 in ('busco empleo',
-                                               'servicios',
-                                               'negocios,maquinaria y construccion',
-                                               'negocios maquinaria y construccion',
-                                               'negocios maquinaria y construcción',
-                                               'negocios maquinaria y construcci髇',
-                                               'negocios maquinaria y construcci�n',
-                                               'negocios, maquinaria y construcción')
-                    and local_main_category in ('servicios',
-                                                'servicios negocios y empleo',
-                                                'servicios, negocios y empleo',
-                                                'servicios,negocios y empleo')
-                then 'Professional Services'
-                when local_category_level1 in ('arrendar','arriendo','comprar')
-                and local_main_category in ('inmuebles') then 'Real Estate'
-                when local_main_category in ('unknown','undefined')
-                then 'Undefined'
-                else 'Undefined'
-            end vertical,
+            {6}
+            {3}
             'All' main_category,   
             count(distinct environment_id) active_users,
             count(distinct session_id) sessions,
-            count(distinct case when event_type = 'View' and
-            object_type = 'ClassifiedAd' then environment_id end)
-            active_users_that_do_adviews,
-            count(distinct case when event_type in ('Call','SMS','Send','Show')
-            then environment_id end) active_users_that_do_leads
+            {5}
+            count(distinct case when event_type in ('Call',
+                                                    'SMS',
+                                                    'Send',
+                                                    'Show')
+                                                    then environment_id end) active_users_that_do_leads
         from
             yapocl_databox.insights_events_behavioral_fact_layer_365d
         where
-            cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) = date '{0}'
+            cast(date_parse(cast(year as varchar) || '-' || 
+                cast(month as varchar) || '-' ||
+                cast(day as varchar),'%Y-%c-%e') as date) = date '{0}'
             and product_type is not null
         group by 1,2,3,4,5
             union all
         select
-            cast(date_parse(cast(year as varchar) || '-' || 
-            cast(month as varchar) || '-' ||
-            cast(day as varchar),'%Y-%c-%e') as date) timedate,  
+            {1}  
             'All Yapo' platform,
             'All Yapo' traffic_channel,
-            case when local_main_category in ('computadores & electrónica',
-                                              'computadore & electronica',
-                                              'computadores & electr?nica',
-                                              'computadores y electronica',
-                                              'futura mamá','futura mam?',
-                                              'futura mama bebes y ninos',
-                                              'futura mamá bebés y niños',
-                                              'futura mamá, bebés y niños',
-                                              'futura mamá,bebés y niños',
-                                              'futura mam? beb?s y ni?os',
-                                              'futura mam?,beb?s y ni?os','
-                                              hogar',
-                                              'moda',
-                                              'moda calzado belleza y salud',
-                                              'moda, calzado, belleza y salud',
-                                              'moda,calzado,belleza y salud',
-                                              'otros',
-                                              'otros productos',
-                                              'other',
-                                              'tiempo libre')
-            then 'Consumer Goods'
-                when local_main_category in ('inmuebles') then 'Real Estate'
-                when local_main_category in ('servicios',
-                                             'servicios negocios y empleo',
-                                             'servicios, negocios y empleo',
-                                             'servicios,negocios y empleo')
-            then 'Jobs'
-                when local_main_category in ('vehiculos',
-                                             'vehículos',
-                                             'veh?culos')
-            then 'Motor'
-                when local_main_category in ('unknown','undefined')
-                then 'Undefined'
-                else 'Undefined'
-            end vertical,
-            case when local_main_category in ('computadores & electrónica',
-                                              'computadore & electronica',
-                                              'computadores & electr?nica',
-                                              'computadores y electronica')
-            then 'Computadores & electrónica'
-                when local_main_category in ('futura mamá',
-                                             'futura mam?',
-                                             'futura mama bebes y ninos',
-                                             'futura mamá bebés y niños',
-                                             'futura mamá, bebés y niños',
-                                             'futura mamá,bebés y niños',
-                                             'futura mam? beb?s y ni?os',
-                                             'futura mam?,beb?s y ni?os')
-            then 'Futura mamá, bebés y niños'
-                when local_main_category in ('hogar') then 'Hogar'
-                when local_main_category in ('inmuebles') then 'Inmuebles'
-                when local_main_category in ('moda',
-                                             'moda calzado belleza y salud',
-                                             'moda, calzado, belleza y salud',
-                                             'moda,calzado,belleza y salud')
-            then 'Moda, calzado, belleza y salud'
-                when local_main_category in ('otros',
-                                             'otros productos',
-                                             'other')
-            then 'Otros'
-                when local_main_category in ('servicios',
-                                             'servicios negocios y empleo',
-                                             'servicios, negocios y empleo',
-                                             'servicios,negocios y empleo')
-            then 'Servicios, negocios y empleo'
-                when local_main_category in ('tiempo libre')
-            then 'Tiempo libre'
-                when local_main_category in ('vehiculos',
-                                             'vehículos',
-                                             'veh?culos',
-                                             'vehï¿œculos')
-            then 'Vehículos'
-                when local_main_category in ('unknown','undefined')
-                then 'Undefined'
-                when local_main_category is null then 'Undefined'
-                else 'Undefined'
-            end main_category,
+            {3}
+            {4}
             count(distinct environment_id) active_users,
             count(distinct session_id) sessions,
-            count(distinct case when event_type = 'View' and
-            object_type = 'ClassifiedAd' then environment_id end)
-            active_users_that_do_adviews,
-            count(distinct case when event_type in ('Call','SMS','Send','Show')
-            then environment_id end) active_users_that_do_leads
+            {5}
+            count(distinct case when event_type in ('Call',
+                                                    'SMS',
+                                                    'Send',
+                                                    'Show')
+                                                    then environment_id end) active_users_that_do_leads
         from
             yapocl_databox.insights_events_behavioral_fact_layer_365d
         where
-            cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) = date '{0}'
+            cast(date_parse(cast(year as varchar) || '-' || 
+                cast(month as varchar) || '-' ||
+                cast(day as varchar),'%Y-%c-%e') as date) = date '{0}'
         group by 1,2,3,4,5
             union all
         select
-            cast(date_parse(cast(year as varchar) || '-' || 
-            cast(month as varchar) || '-' ||
-            cast(day as varchar),'%Y-%c-%e') as date) timedate,  
+            {1}  
             'All Yapo' platform,
             'All Yapo' traffic_channel,
-            case when local_main_category in ('vehiculos',
-                                              'vehículos',
-                                              'veh�culos')
-            then 'Motor' 
-                when local_category_level1 in ('arriendo de temporada')
-                and local_main_category in ('inmuebles') then 'Holiday Rental'
-                when local_category_level1 in ('ofertas de empleo') and
-                local_main_category in ('servicios',
-                                        'servicios negocios y empleo',
-                                        'servicios, negocios y empleo',
-                                        'servicios,negocios y empleo')
-                then 'Jobs'
-                when local_main_category in ('computadores & electrónica',
-                                             'computadore & electronica',
-                                             'computadores & electr�nica',
-                                             'computadores y electronica',
-                                             'futura mamá',
-                                             'futura mam�',
-                                             'futura mama bebes y ninos',
-                                             'futura mamá bebés y niños',
-                                             'futura mamá, bebés y niños',
-                                             'futura mamá,bebés y niños',
-                                             'futura mam� beb�s y ni�os',
-                                             'futura mam�,beb�s y ni�os',
-                                             'hogar',
-                                             'moda',
-                                             'moda calzado belleza y salud',
-                                             'moda, calzado, belleza y salud',
-                                             'moda,calzado,belleza y salud',
-                                             'otros',
-                                             'otros productos',
-                                             'other',
-                                             'tiempo libre')
-                then 'Consumer Goods'
-                when local_category_level1 in ('busco empleo',
-                                               'servicios',
-                                               'negocios,maquinaria y construccion',
-                                               'negocios maquinaria y construccion',
-                                               'negocios maquinaria y construcción',
-                                               'negocios maquinaria y construcci髇',
-                                               'negocios maquinaria y construcci�n',
-                                               'negocios, maquinaria y construcción')
-                    and local_main_category in ('servicios',
-                                                'servicios negocios y empleo',
-                                                'servicios, negocios y empleo',
-                                                'servicios,negocios y empleo')
-                then 'Professional Services'
-                when local_category_level1 in ('arrendar','arriendo','comprar')
-                and local_main_category in ('inmuebles') then 'Real Estate'
-                when local_main_category in ('unknown','undefined')
-                then 'Undefined'
-                else 'Undefined'
-            end vertical,
+            {3}
             'All' main_category,
             count(distinct environment_id) active_users,
             count(distinct session_id) sessions,
-            count(distinct case when event_type = 'View' and
-            object_type = 'ClassifiedAd' then environment_id end)
-            active_users_that_do_adviews,
-            count(distinct case when event_type in ('Call','SMS','Send','Show')
-            then environment_id end) active_users_that_do_leads
+            {5}
+            count(distinct case when event_type in ('Call',
+                                                    'SMS',
+                                                    'Send',
+                                                    'Show')
+                                                    then environment_id end) active_users_that_do_leads
         from
             yapocl_databox.insights_events_behavioral_fact_layer_365d
         where
-            cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) = date '{0}'
+            cast(date_parse(cast(year as varchar) || '-' || 
+                cast(month as varchar) || '-' ||
+                cast(day as varchar),'%Y-%c-%e') as date) = date '{0}'
         group by 1,2,3,4,5
             union all
         select
-            cast(date_parse(cast(year as varchar) || '-' || 
-            cast(month as varchar) || '-' ||
-            cast(day as varchar),'%Y-%c-%e') as date) timedate,  
+            {1}  
             'All Yapo' platform,
-            case when traffic_channel = 'Direct' then 'Direct'
-                when traffic_channel = 'SEO' then 'SEO'
-                when traffic_channel in ('Social Media',
-                                         'Social Media Paid',
-                                         'Paid search',
-                                         'Display') 
-            then 'Sponsored Links'
-                when traffic_channel in ('Affiliates',
-                                         'Email marketing',
-                                         'unknown')
-            then 'Others'
-            end traffic_channel,
+            {6}
             'All Yapo' vertical,
             'All' main_category,
             count(distinct environment_id) active_users,
             count(distinct session_id) sessions,
-            count(distinct case when event_type = 'View' and
-            object_type = 'ClassifiedAd' then environment_id end)
-            active_users_that_do_adviews,
-            count(distinct case when event_type in ('Call','SMS','Send','Show')
-            then environment_id end) active_users_that_do_leads
+            {5}
+            count(distinct case when event_type in ('Call',
+                                                    'SMS',
+                                                    'Send',
+                                                    'Show')
+                                                    then environment_id end) active_users_that_do_leads
         from
             yapocl_databox.insights_events_behavioral_fact_layer_365d
         where
-            cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) = date '{0}'
+            cast(date_parse(cast(year as varchar) || '-' || 
+                cast(month as varchar) || '-' ||
+                cast(day as varchar),'%Y-%c-%e') as date) = date '{0}'
         group by 1,2,3,4,5
             union all
         select
-            cast(date_parse(cast(year as varchar) || '-' || 
-            cast(month as varchar) || '-' ||
-            cast(day as varchar),'%Y-%c-%e') as date) timedate,  
-            case when (device_type = 'desktop' and (object_url like
-            '%www2.yapo.cl%' or object_url like '%//yapo.cl%')) or
-            product_type = 'Web' or object_url like '%www.yapo.cl%'
-            or (device_type = 'desktop' and product_type = 'unknown') then 'Web'
-                when ((device_type = 'mobile' or device_type = 'tablet')
-                and (object_url like '%www2.yapo.cl%' or object_url
-                like '%//yapo.cl%')) or product_type = 'M-Site'
-                or object_url like '%m.yapo.cl%' or ((device_type =
-                'mobile' or device_type = 'tablet') and product_type
-                = 'unknown')
-            then 'MSite'
-                when ((device_type = 'mobile' or device_type = 'tablet')
-                and object_url is not null and product_type = 'AndroidApp')
-                or product_type = 'AndroidApp'
-            then 'AndroidApp'
-                when ((device_type = 'mobile' or device_type = 'tablet')
-                and object_url is not null and product_type = 'iOSApp')
-                or product_type = 'iOSApp' or product_type = 'iPadApp'
-            then 'iOSApp'
-            end platform,
+            {1}  
+            {2}
             'All Yapo' traffic_channel,
-            case when local_main_category in ('vehiculos',
-                                              'vehículos',
-                                              'veh�culos')
-            then 'Motor' 
-                when local_category_level1 in ('arriendo de temporada')
-                and local_main_category in ('inmuebles') then 'Holiday Rental' 
-                when local_category_level1 in ('ofertas de empleo') and
-                local_main_category in ('servicios',
-                                        'servicios negocios y empleo',
-                                        'servicios, negocios y empleo',
-                                        'servicios,negocios y empleo')
-                then 'Jobs'
-                when local_main_category in ('computadores & electrónica',
-                                             'computadore & electronica',
-                                             'computadores & electr�nica',
-                                             'computadores y electronica',
-                                             'futura mamá',
-                                             'futura mam�',
-                                             'futura mama bebes y ninos',
-                                             'futura mamá bebés y niños',
-                                             'futura mamá, bebés y niños',
-                                             'futura mamá,bebés y niños',
-                                             'futura mam� beb�s y ni�os',
-                                             'futura mam�,beb�s y ni�os',
-                                             'hogar',
-                                             'moda',
-                                             'moda calzado belleza y salud',
-                                             'moda, calzado, belleza y salud',
-                                             'moda,calzado,belleza y salud',
-                                             'otros',
-                                             'otros productos',
-                                             'other',
-                                             'tiempo libre')
-                then 'Consumer Goods'
-                when local_category_level1 in ('busco empleo',
-                                               'servicios',
-                                               'negocios,maquinaria y construccion',
-                                               'negocios maquinaria y construccion',
-                                               'negocios maquinaria y construcción',
-                                               'negocios maquinaria y construcci髇',
-                                               'negocios maquinaria y construcci�n',
-                                               'negocios, maquinaria y construcción')
-                    and local_main_category in ('servicios',
-                                                'servicios negocios y empleo',
-                                                'servicios, negocios y empleo',
-                                                'servicios,negocios y empleo')
-                then 'Professional Services'
-                when local_category_level1 in ('arrendar','arriendo','comprar')
-                and local_main_category in ('inmuebles') then 'Real Estate'
-                when local_main_category in ('unknown','undefined')
-                then 'Undefined'
-                else 'Undefined'
-            end vertical,
-            case when local_main_category in ('computadores & electrónica',
-                                              'computadore & electronica',
-                                              'computadores & electr?nica',
-                                              'computadores y electronica')
-            then 'Computadores & electrónica'
-                when local_main_category in ('futura mamá',
-                                             'futura mam?',
-                                             'futura mama bebes y ninos',
-                                             'futura mamá bebés y niños',
-                                             'futura mamá, bebés y niños',
-                                             'futura mamá,bebés y niños',
-                                             'futura mam? beb?s y ni?os',
-                                             'futura mam?,beb?s y ni?os')
-            then 'Futura mamá, bebés y niños'
-                when local_main_category in ('hogar') then 'Hogar'
-                when local_main_category in ('inmuebles') then 'Inmuebles'
-                when local_main_category in ('moda',
-                                             'moda calzado belleza y salud',
-                                             'moda, calzado, belleza y salud',
-                                             'moda,calzado,belleza y salud')
-            then 'Moda, calzado, belleza y salud'
-                when local_main_category in ('otros',
-                                             'otros productos',
-                                             'other')
-            then 'Otros'
-                when local_main_category in ('servicios',
-                                             'servicios negocios y empleo',
-                                             'servicios, negocios y empleo',
-                                             'servicios,negocios y empleo')
-            then 'Servicios, negocios y empleo'
-                when local_main_category in ('tiempo libre')
-            then 'Tiempo libre'
-                when local_main_category in ('vehiculos',
-                                             'vehículos',
-                                             'veh?culos',
-                                             'vehï¿œculos')
-            then 'Vehículos'
-                when local_main_category in ('unknown','undefined')
-                then 'Undefined'
-                when local_main_category is null then 'Undefined'
-                else 'Undefined'
-            end main_category,
+            {3}
+            {4}
             count(distinct environment_id) active_users,
             count(distinct session_id) sessions,
-            count(distinct case when event_type = 'View' and
-            object_type = 'ClassifiedAd' then environment_id end)
-            active_users_that_do_adviews,
-            count(distinct case when event_type in ('Call','SMS','Send','Show')
-            then environment_id end) active_users_that_do_leads
+            {5}
+            count(distinct case when event_type in ('Call',
+                                                    'SMS',
+                                                    'Send',
+                                                    'Show')
+                                                    then environment_id end) active_users_that_do_leads
         from
             yapocl_databox.insights_events_behavioral_fact_layer_365d
         where
-            cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) = date '{0}'
+            cast(date_parse(cast(year as varchar) || '-' || 
+                cast(month as varchar) || '-' ||
+                cast(day as varchar),'%Y-%c-%e') as date) = date '{0}'
             and product_type is not null
         group by 1,2,3,4,5
             union all
         select
-            cast(date_parse(cast(year as varchar) || '-' || 
-            cast(month as varchar) || '-' ||
-            cast(day as varchar),'%Y-%c-%e') as date) timedate,  
-            case when (device_type = 'desktop' and (object_url like
-            '%www2.yapo.cl%' or object_url like '%//yapo.cl%')) or
-            product_type = 'Web' or object_url like '%www.yapo.cl%'
-            or (device_type = 'desktop' and product_type = 'unknown') then 'Web'
-                when ((device_type = 'mobile' or device_type = 'tablet')
-                and (object_url like '%www2.yapo.cl%' or object_url
-                like '%//yapo.cl%')) or product_type = 'M-Site'
-                or object_url like '%m.yapo.cl%' or ((device_type =
-                'mobile' or device_type = 'tablet') and product_type
-                = 'unknown')
-            then 'MSite'
-                when ((device_type = 'mobile' or device_type = 'tablet')
-                and object_url is not null and product_type = 'AndroidApp')
-                or product_type = 'AndroidApp'
-            then 'AndroidApp'
-                when ((device_type = 'mobile' or device_type = 'tablet')
-                and object_url is not null and product_type = 'iOSApp')
-                or product_type = 'iOSApp' or product_type = 'iPadApp'
-            then 'iOSApp'
-            end platform,
+            {1}  
+            {2}
             'All Yapo' traffic_channel,
-            case when local_main_category in ('vehiculos',
-                                              'vehículos',
-                                              'veh�culos')
-            then 'Motor' 
-                when local_category_level1 in ('arriendo de temporada')
-                and local_main_category in ('inmuebles') then 'Holiday Rental' 
-                when local_category_level1 in ('ofertas de empleo') and
-                local_main_category in ('servicios',
-                                        'servicios negocios y empleo',
-                                        'servicios, negocios y empleo',
-                                        'servicios,negocios y empleo')
-                then 'Jobs'
-                when local_main_category in ('computadores & electrónica',
-                                             'computadore & electronica',
-                                             'computadores & electr�nica',
-                                             'computadores y electronica',
-                                             'futura mamá',
-                                             'futura mam�',
-                                             'futura mama bebes y ninos',
-                                             'futura mamá bebés y niños',
-                                             'futura mamá, bebés y niños',
-                                             'futura mamá,bebés y niños',
-                                             'futura mam� beb�s y ni�os',
-                                             'futura mam�,beb�s y ni�os',
-                                             'hogar',
-                                             'moda',
-                                             'moda calzado belleza y salud',
-                                             'moda, calzado, belleza y salud',
-                                             'moda,calzado,belleza y salud',
-                                             'otros',
-                                             'otros productos',
-                                             'other',
-                                             'tiempo libre')
-                then 'Consumer Goods'
-                when local_category_level1 in ('busco empleo',
-                                               'servicios',
-                                               'negocios,maquinaria y construccion',
-                                               'negocios maquinaria y construccion',
-                                               'negocios maquinaria y construcción',
-                                               'negocios maquinaria y construcci髇',
-                                               'negocios maquinaria y construcci�n',
-                                               'negocios, maquinaria y construcción')
-                    and local_main_category in ('servicios',
-                                                'servicios negocios y empleo',
-                                                'servicios, negocios y empleo',
-                                                'servicios,negocios y empleo')
-                then 'Professional Services'
-                when local_category_level1 in ('arrendar','arriendo','comprar')
-                and local_main_category in ('inmuebles') then 'Real Estate'
-                when local_main_category in ('unknown','undefined')
-                then 'Undefined'
-                else 'Undefined'
-            end vertical,
+            {3}
             'All' main_category,
             count(distinct environment_id) active_users,
             count(distinct session_id) sessions,
-            count(distinct case when event_type = 'View' and
-            object_type = 'ClassifiedAd' then environment_id end)
-            active_users_that_do_adviews,
-            count(distinct case when event_type in ('Call','SMS','Send','Show')
-            then environment_id end) active_users_that_do_leads
+            {5}
+            count(distinct case when event_type in ('Call',
+                                                    'SMS',
+                                                    'Send',
+                                                    'Show')
+                                                    then environment_id end) active_users_that_do_leads
         from
             yapocl_databox.insights_events_behavioral_fact_layer_365d
         where
-            cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) = date '{0}'
+            cast(date_parse(cast(year as varchar) || '-' || 
+                cast(month as varchar) || '-' ||
+                cast(day as varchar),'%Y-%c-%e') as date) = date '{0}'
             and product_type is not null
         group by 1,2,3,4,5
             union all
         select
-            cast(date_parse(cast(year as varchar) || '-' || 
-            cast(month as varchar) || '-' ||
-            cast(day as varchar),'%Y-%c-%e') as date) timedate,  
-            case when (device_type = 'desktop' and (object_url like
-            '%www2.yapo.cl%' or object_url like '%//yapo.cl%')) or
-            product_type = 'Web' or object_url like '%www.yapo.cl%'
-            or (device_type = 'desktop' and product_type = 'unknown') then 'Web'
-                when ((device_type = 'mobile' or device_type = 'tablet')
-                and (object_url like '%www2.yapo.cl%' or object_url
-                like '%//yapo.cl%')) or product_type = 'M-Site'
-                or object_url like '%m.yapo.cl%' or ((device_type =
-                'mobile' or device_type = 'tablet') and product_type
-                = 'unknown')
-            then 'MSite'
-                when ((device_type = 'mobile' or device_type = 'tablet')
-                and object_url is not null and product_type = 'AndroidApp')
-                or product_type = 'AndroidApp'
-            then 'AndroidApp'
-                when ((device_type = 'mobile' or device_type = 'tablet')
-                and object_url is not null and product_type = 'iOSApp')
-                or product_type = 'iOSApp' or product_type = 'iPadApp'
-            then 'iOSApp'
-            end platform,
+            {1}  
+            {2}
             'All Yapo' traffic_channel,
             'All Yapo' vertical,
             'All' main_category,
             count(distinct environment_id) active_users,
             count(distinct session_id) sessions,
-            count(distinct case when event_type = 'View' and
-            object_type = 'ClassifiedAd' then environment_id end)
-            active_users_that_do_adviews,
-            count(distinct case when event_type in ('Call','SMS','Send','Show')
-            then environment_id end) active_users_that_do_leads
+            {5}
+            count(distinct case when event_type in ('Call',
+                                                    'SMS',
+                                                    'Send',
+                                                    'Show')
+                                                    then environment_id end) active_users_that_do_leads
         from
             yapocl_databox.insights_events_behavioral_fact_layer_365d
         where
-            cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) = date '{0}'
+            cast(date_parse(cast(year as varchar) || '-' || 
+                cast(month as varchar) || '-' ||
+                cast(day as varchar),'%Y-%c-%e') as date) = date '{0}'
             and product_type is not null
         group by 1,2,3,4,5
             union all
         select
-            cast(date_parse(cast(year as varchar) || '-' || 
-            cast(month as varchar) || '-' ||
-            cast(day as varchar),'%Y-%c-%e') as date) timedate,    
-            case when (device_type = 'desktop' and (object_url like
-            '%www2.yapo.cl%' or object_url like '%//yapo.cl%')) or
-            product_type = 'Web' or object_url like '%www.yapo.cl%'
-            or (device_type = 'desktop' and product_type = 'unknown') then 'Web'
-                when ((device_type = 'mobile' or device_type = 'tablet')
-                and (object_url like '%www2.yapo.cl%' or object_url
-                like '%//yapo.cl%')) or product_type = 'M-Site'
-                or object_url like '%m.yapo.cl%' or ((device_type =
-                'mobile' or device_type = 'tablet') and product_type
-                = 'unknown')
-            then 'MSite'
-                when ((device_type = 'mobile' or device_type = 'tablet')
-                and object_url is not null and product_type = 'AndroidApp')
-                or product_type = 'AndroidApp'
-            then 'AndroidApp'
-                when ((device_type = 'mobile' or device_type = 'tablet')
-                and object_url is not null and product_type = 'iOSApp')
-                or product_type = 'iOSApp' or product_type = 'iPadApp'
-            then 'iOSApp'
-            end platform,
-            case when traffic_channel = 'Direct' then 'Direct'
-                when traffic_channel = 'SEO' then 'SEO'
-                when traffic_channel in ('Social Media',
-                                         'Social Media Paid',
-                                         'Paid search',
-                                         'Display') 
-            then 'Sponsored Links'
-                when traffic_channel in ('Affiliates',
-                                         'Email marketing',
-                                         'unknown')
-            then 'Others'
-            end traffic_channel,
+            {1}    
+            {2}
+            {6}
             'All Yapo' vertical,
             'All' main_category,
             count(distinct environment_id) active_users,
             count(distinct session_id) sessions,
-            count(distinct case when event_type = 'View' and
-            object_type = 'ClassifiedAd' then environment_id end)
-            active_users_that_do_adviews,
-            count(distinct case when event_type in ('Call','SMS','Send','Show')
-            then environment_id end) active_users_that_do_leads
+            {5}
+            count(distinct case when event_type in ('Call',
+                                                    'SMS',
+                                                    'Send',
+                                                    'Show')
+                                                    then environment_id end) active_users_that_do_leads
         from
             yapocl_databox.insights_events_behavioral_fact_layer_365d
         where
-            cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) = date '{0}'
+            cast(date_parse(cast(year as varchar) || '-' || 
+                cast(month as varchar) || '-' ||
+                cast(day as varchar),'%Y-%c-%e') as date) = date '{0}'
             and product_type is not null
         group by 1,2,3,4,5
         order by 1,2,3,4,5
-        """.format(self.params.get_date_from())
+        """.format(self.params.get_date_from(),
+                   self.get_query_fields('timedate'),
+                   self.get_query_fields('platform'),
+                   self.get_query_fields('vertical'),
+                   self.get_query_fields('main_category'),
+                   self.get_query_fields('active_users_that_do_adviews'),
+                   self.get_query_fields('traffic_channel'))
         return query
 
     def query_buyers(self) -> str:
@@ -1080,909 +473,170 @@ class Query:
             main_category,
             sum(unique_leads) unique_leads
         from 
-        (
-        select
-            cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) timedate,
-            'All Yapo' platform,
-            'All Yapo' traffic_channel,
-            'All Yapo' vertical,
-            'All' main_category,
-            count(distinct row(ad_id, environment_id)) unique_leads
-        from
-            yapocl_databox.insights_events_behavioral_fact_layer_365d
-        where
-            cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) = date '{0}'
-            and event_type in ('Call','SMS','Send','Show') 
-            and lead_id != 'unknown'
-        group by 1,2,3,4,5
-        union all
+            (
             select
-                cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) timedate,    
-                case when (device_type = 'desktop' and (object_url like 
-                '%www2.yapo.cl%' or object_url like '%//yapo.cl%')) or 
-                product_type = 'Web' or object_url like '%www.yapo.cl%' or
-                (device_type = 'desktop' and product_type = 'unknown') then 'Web'
-                    when ((device_type = 'mobile' or device_type = 'tablet')
-                    and (object_url like '%www2.yapo.cl%'
-                    or object_url like '%//yapo.cl%')) or product_type = 'M-Site'
-                    or object_url like '%m.yapo.cl%' or ((device_type = 'mobile'
-                    or device_type = 'tablet') and product_type = 'unknown')
-                then 'MSite'
-                    when ((device_type = 'mobile' or device_type = 'tablet')
-                    and object_url is not null and product_type = 'AndroidApp')
-                    or product_type = 'AndroidApp'
-                then 'AndroidApp'
-                    when ((device_type = 'mobile' or device_type = 'tablet')
-                    and object_url is not null and product_type = 'iOSApp')
-                    or product_type = 'iOSApp' or product_type = 'iPadApp'
-                then 'iOSApp'
-                end platform,
-                case when traffic_channel = 'Direct' then 'Direct'
-                    when traffic_channel = 'SEO' then 'SEO'
-                    when traffic_channel in ('Social Media',
-                                             'Social Media Paid',
-                                             'Paid search',
-                                             'Display')
-                then 'Sponsored Links'
-                    when traffic_channel in ('Affiliates',
-                                             'Email marketing',
-                                             'unknown')
-                then 'Others'
-                end traffic_channel,
-                case when local_main_category in ('vehiculos',
-                                                  'vehículos',
-                                                  'veh�culos')
-                then 'Motor'
-                    when local_category_level1 in ('arriendo de temporada')
-                    and local_main_category in ('inmuebles')
-                then 'Holiday Rental'
-                    when local_category_level1 in ('ofertas de empleo') and
-                    local_main_category in ('servicios',
-                                            'servicios negocios y empleo',
-                                            'servicios, negocios y empleo',
-                                            'servicios,negocios y empleo')
-                then 'Jobs'
-                    when local_main_category in ('computadores & electrónica',
-                                                 'computadore & electronica',
-                                                 'computadores & electr�nica',
-                                                 'computadores y electronica',
-                                                 'futura mamá',
-                                                 'futura mam�',
-                                                 'futura mama bebes y ninos',
-                                                 'futura mamá bebés y niños',
-                                                 'futura mamá, bebés y niños',
-                                                 'futura mamá,bebés y niños',
-                                                 'futura mam� beb�s y ni�os',
-                                                 'futura mam�,beb�s y ni�os',
-                                                 'hogar',
-                                                 'moda',
-                                                 'moda calzado belleza y salud',
-                                                 'moda, calzado, belleza y salud',
-                                                 'moda,calzado,belleza y salud',
-                                                 'otros',
-                                                 'otros productos',
-                                                 'other',
-                                                 'tiempo libre')
-                then 'Consumer Goods'
-                    when local_category_level1 in ('busco empleo',
-                                                   'servicios',
-                                                   'negocios,maquinaria y construccion',
-                                                   'negocios maquinaria y construccion',
-                                                   'negocios maquinaria y construcción',
-                                                   'negocios maquinaria y construcci髇',
-                                                   'negocios maquinaria y construcci�n',
-                                                   'negocios, maquinaria y construcción')
-                    and local_main_category in ('servicios',
-                                                'servicios negocios y empleo',
-                                                'servicios, negocios y empleo',
-                                                'servicios,negocios y empleo')
-                then 'Professional Services'
-                    when local_category_level1 in ('arrendar',
-                                                   'arriendo',
-                                                   'comprar') 
-                    and local_main_category in ('inmuebles')
-                then 'Real Estate'
-                    when local_main_category in ('unknown',
-                                                 'undefined')
-                then 'Undefined'
-                    else 'Undefined'
-                end vertical,
-                case when local_main_category in ('computadores & electrónica',
-                                                  'computadore & electronica',
-                                                  'computadores & electr�nica',
-                                                  'computadores y electronica')
-                then 'Computadores & electrónica'
-                    when local_main_category in ('futura mamá',
-                                                 'futura mam�',
-                                                 'futura mama bebes y ninos',
-                                                 'futura mamá bebés y niños',
-                                                 'futura mamá, bebés y niños',
-                                                 'futura mamá,bebés y niños',
-                                                 'futura mam� beb�s y ni�os',
-                                                 'futura mam�,beb�s y ni�os')
-                then 'Futura mamá, bebés y niños'
-                    when local_main_category in ('hogar') then 'Hogar'
-                    when local_main_category in ('inmuebles') then 'Inmuebles'
-                    when local_main_category in ('moda',
-                                                 'moda calzado belleza y salud',
-                                                 'moda, calzado, belleza y salud',
-                                                 'moda,calzado,belleza y salud')
-                then 'Moda, calzado, belleza y salud'
-                    when local_main_category in ('otros',
-                                                 'otros productos',
-                                                 'other')
-                then 'Otros'
-                    when local_main_category in ('servicios',
-                                                 'servicios negocios y empleo',
-                                                 'servicios, negocios y empleo',
-                                                 'servicios,negocios y empleo')
-                then 'Servicios, negocios y empleo'
-                    when local_main_category in ('tiempo libre') then 'Tiempo libre'
-                    when local_main_category in ('vehiculos','vehículos','veh�culos') then 'Vehículos'
-                    when local_main_category in ('unknown',
-                                                 'undefined')
-                then 'Undefined'
-                    when local_main_category is null then 'Undefined'
-                    else local_main_category
-                end main_category,
-                count(distinct row(ad_id, environment_id)) unique_leads
-            from
-                yapocl_databox.insights_events_behavioral_fact_layer_365d
-            where
-                cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) = date '{0}'
-                    and event_type in ('Call','SMS','Send','Show') and lead_id != 'unknown'
-            group by 1,2,3,4,5
-                union all
-            select
-                cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) timedate,
-                case when (device_type = 'desktop' and (object_url like 
-                '%www2.yapo.cl%' or object_url like '%//yapo.cl%')) or 
-                product_type = 'Web' or object_url like '%www.yapo.cl%' or
-                (device_type = 'desktop' and product_type = 'unknown') then 'Web'
-                    when ((device_type = 'mobile' or device_type = 'tablet')
-                    and (object_url like '%www2.yapo.cl%'
-                    or object_url like '%//yapo.cl%')) or product_type = 'M-Site'
-                    or object_url like '%m.yapo.cl%' or ((device_type = 'mobile'
-                    or device_type = 'tablet') and product_type = 'unknown')
-                then 'MSite'
-                    when ((device_type = 'mobile' or device_type = 'tablet')
-                    and object_url is not null and product_type = 'AndroidApp')
-                    or product_type = 'AndroidApp'
-                then 'AndroidApp'
-                    when ((device_type = 'mobile' or device_type = 'tablet')
-                    and object_url is not null and product_type = 'iOSApp')
-                    or product_type = 'iOSApp' or product_type = 'iPadApp'
-                then 'iOSApp'
-                end platform,
-                case when traffic_channel = 'Direct' then 'Direct'
-                    when traffic_channel = 'SEO' then 'SEO'
-                    when traffic_channel in ('Social Media',
-                                             'Social Media Paid',
-                                             'Paid search',
-                                             'Display')
-                then 'Sponsored Links'
-                    when traffic_channel in ('Affiliates',
-                                             'Email marketing',
-                                             'unknown')
-                then 'Others'
-                end traffic_channel,
-                case  
-                    when local_category_level1 in ('arriendo de temporada')
-                    and local_main_category in ('inmuebles') 
-                then 'Holiday Rental'
-                    when local_category_level1 in ('ofertas de empleo')
-                    and local_main_category in ('servicios',
-                                                'servicios negocios y empleo',
-                                                'servicios, negocios y empleo',
-                                                'servicios,negocios y empleo')
-                    then 'Jobs'
-                    when local_main_category in ('computadores & electrónica',
-                                                 'computadore & electronica',
-                                                 'computadores & electr�nica',
-                                                 'computadores y electronica',
-                                                 'futura mamá',
-                                                 'futura mam�',
-                                                 'futura mama bebes y ninos',
-                                                 'futura mamá bebés y niños',
-                                                 'futura mamá, bebés y niños',
-                                                 'futura mamá,bebés y niños',
-                                                 'futura mam� beb�s y ni�os',
-                                                 'futura mam�,beb�s y ni�os',
-                                                 'hogar',
-                                                 'moda',
-                                                 'moda calzado belleza y salud',
-                                                 'moda, calzado, belleza y salud',
-                                                 'moda,calzado,belleza y salud',
-                                                 'otros',
-                                                 'otros productos',
-                                                 'other',
-                                                 'tiempo libre')
-                then 'Consumer Goods'
-                    when local_category_level1 in ('busco empleo',
-                                                   'servicios',
-                                                   'negocios,maquinaria y construccion',
-                                                   'negocios maquinaria y construccion',
-                                                   'negocios maquinaria y construcción',
-                                                   'negocios maquinaria y construcci髇',
-                                                   'negocios maquinaria y construcci�n',
-                                                   'negocios, maquinaria y construcción')
-                    and local_main_category in ('servicios',
-                                                'servicios negocios y empleo',
-                                                'servicios, negocios y empleo',
-                                                'servicios,negocios y empleo')
-                then 'Professional Services'
-                    when local_category_level1 in ('arrendar',
-                                                   'arriendo',
-                                                   'comprar') 
-                    and local_main_category in ('inmuebles')
-                then 'Real Estate'
-                    when local_main_category in ('unknown',
-                                                 'undefined')
-                then 'Undefined'
-                    else 'Undefined'
-                end vertical,
+                {1}    
+                'All Yapo' platform,
+                'All Yapo' traffic_channel,
+                'All Yapo' vertical,
                 'All' main_category,
                 count(distinct row(ad_id, environment_id)) unique_leads
             from
                 yapocl_databox.insights_events_behavioral_fact_layer_365d
             where
-                cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) = date '{0}'
+                cast(date_parse(cast(year as varchar) || '-' || 
+                cast(month as varchar) || '-' ||
+                cast(day as varchar),'%Y-%c-%e') as date) = date '{0}'
                     and event_type in ('Call','SMS','Send','Show') and lead_id != 'unknown'
             group by 1,2,3,4,5
                 union all
             select
-                cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) timedate,  
-                'All Yapo' platform,
-                case when traffic_channel = 'Direct' then 'Direct'
-                    when traffic_channel = 'SEO' then 'SEO'
-                    when traffic_channel in ('Social Media',
-                                             'Social Media Paid',
-                                             'Paid search',
-                                             'Display')
-                then 'Sponsored Links'
-                    when traffic_channel in ('Affiliates',
-                                             'Email marketing',
-                                             'unknown')
-                then 'Others'
-                end traffic_channel,
-                case  
-                    when local_category_level1 in ('arriendo de temporada') and local_main_category in ('inmuebles') then 'Holiday Rental' 
-                    when local_category_level1 in ('ofertas de empleo')
-                    and local_main_category in ('servicios',
-                                                'servicios negocios y empleo',
-                                                'servicios, negocios y empleo',
-                                                'servicios,negocios y empleo')
-                    then 'Jobs'
-                    when local_main_category in ('computadores & electrónica',
-                                                 'computadore & electronica',
-                                                 'computadores & electr�nica',
-                                                 'computadores y electronica',
-                                                 'futura mamá',
-                                                 'futura mam�',
-                                                 'futura mama bebes y ninos',
-                                                 'futura mamá bebés y niños',
-                                                 'futura mamá, bebés y niños',
-                                                 'futura mamá,bebés y niños',
-                                                 'futura mam� beb�s y ni�os',
-                                                 'futura mam�,beb�s y ni�os',
-                                                 'hogar',
-                                                 'moda',
-                                                 'moda calzado belleza y salud',
-                                                 'moda, calzado, belleza y salud',
-                                                 'moda,calzado,belleza y salud',
-                                                 'otros',
-                                                 'otros productos',
-                                                 'other',
-                                                 'tiempo libre')
-                then 'Consumer Goods'
-                    when local_category_level1 in ('busco empleo',
-                                                   'servicios',
-                                                   'negocios,maquinaria y construccion',
-                                                   'negocios maquinaria y construccion',
-                                                   'negocios maquinaria y construcción',
-                                                   'negocios maquinaria y construcci髇',
-                                                   'negocios maquinaria y construcci�n',
-                                                   'negocios, maquinaria y construcción')
-                    and local_main_category in ('servicios',
-                                                'servicios negocios y empleo',
-                                                'servicios, negocios y empleo',
-                                                'servicios,negocios y empleo')
-                then 'Professional Services'
-                    when local_category_level1 in ('arrendar',
-                                                   'arriendo',
-                                                   'comprar') 
-                    and local_main_category in ('inmuebles')
-                then 'Real Estate'
-                    when local_main_category in ('unknown',
-                                                 'undefined')
-                then 'Undefined'
-                    else 'Undefined'
-                end vertical,
-                case when local_main_category in ('computadores & electrónica',
-                                                  'computadore & electronica',
-                                                  'computadores & electr�nica',
-                                                  'computadores y electronica')
-                then 'Computadores & electrónica'
-                    when local_main_category in ('futura mamá',
-                                                 'futura mam�',
-                                                 'futura mama bebes y ninos',
-                                                 'futura mamá bebés y niños',
-                                                 'futura mamá, bebés y niños',
-                                                 'futura mamá,bebés y niños',
-                                                 'futura mam� beb�s y ni�os',
-                                                 'futura mam�,beb�s y ni�os')
-                then 'Futura mamá, bebés y niños'
-                    when local_main_category in ('hogar') then 'Hogar'
-                    when local_main_category in ('inmuebles') then 'Inmuebles'
-                    when local_main_category in ('moda',
-                                                 'moda calzado belleza y salud',
-                                                 'moda, calzado, belleza y salud',
-                                                 'moda,calzado,belleza y salud')
-                then 'Moda, calzado, belleza y salud'
-                    when local_main_category in ('otros',
-                                                 'otros productos',
-                                                 'other')
-                then 'Otros'
-                    when local_main_category in ('servicios',
-                                                 'servicios negocios y empleo',
-                                                 'servicios, negocios y empleo',
-                                                 'servicios,negocios y empleo')
-                then 'Servicios, negocios y empleo'
-                    when local_main_category in ('tiempo libre') then 'Tiempo libre'
-                    when local_main_category in ('vehiculos','vehículos','veh�culos') then 'Vehículos'
-                    when local_main_category in ('unknown',
-                                                 'undefined')
-                then 'Undefined'
-                    when local_main_category is null then 'Undefined'
-                    else local_main_category
-                end main_category,   
+                {1}    
+                {2}
+                {6}
+                {3}
+                {4}
                 count(distinct row(ad_id, environment_id)) unique_leads
             from
                 yapocl_databox.insights_events_behavioral_fact_layer_365d
             where
-                cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) = date '{0}'
+                cast(date_parse(cast(year as varchar) || '-' || 
+                cast(month as varchar) || '-' ||
+                cast(day as varchar),'%Y-%c-%e') as date) = date '{0}'
                     and event_type in ('Call','SMS','Send','Show') and lead_id != 'unknown'
             group by 1,2,3,4,5
                 union all
             select
-                cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) timedate,  
+                {1}
+                {2}
+                {6}
+                {3}
+                'All' main_category,
+                count(distinct row(ad_id, environment_id)) unique_leads
+            from
+                yapocl_databox.insights_events_behavioral_fact_layer_365d
+            where
+                cast(date_parse(cast(year as varchar) || '-' || 
+                cast(month as varchar) || '-' ||
+                cast(day as varchar),'%Y-%c-%e') as date) = date '{0}'
+                    and event_type in ('Call','SMS','Send','Show') and lead_id != 'unknown'
+            group by 1,2,3,4,5
+                union all
+            select
+                {1}  
                 'All Yapo' platform,
-                case when traffic_channel = 'Direct' then 'Direct'
-                    when traffic_channel = 'SEO' then 'SEO'
-                    when traffic_channel in ('Social Media',
-                                             'Social Media Paid',
-                                             'Paid search',
-                                             'Display')
-                then 'Sponsored Links'
-                    when traffic_channel in ('Affiliates',
-                                             'Email marketing',
-                                             'unknown')
-                then 'Others'
-                end traffic_channel,
-                case  
-                    when local_category_level1 in ('arriendo de temporada') and local_main_category in ('inmuebles') then 'Holiday Rental' 
-                    when local_category_level1 in ('ofertas de empleo')
-                    and local_main_category in ('servicios',
-                                                'servicios negocios y empleo',
-                                                'servicios, negocios y empleo',
-                                                'servicios,negocios y empleo')
-                    then 'Jobs'
-                    when local_main_category in ('computadores & electrónica',
-                                                 'computadore & electronica',
-                                                 'computadores & electr�nica',
-                                                 'computadores y electronica',
-                                                 'futura mamá',
-                                                 'futura mam�',
-                                                 'futura mama bebes y ninos',
-                                                 'futura mamá bebés y niños',
-                                                 'futura mamá, bebés y niños',
-                                                 'futura mamá,bebés y niños',
-                                                 'futura mam� beb�s y ni�os',
-                                                 'futura mam�,beb�s y ni�os',
-                                                 'hogar',
-                                                 'moda',
-                                                 'moda calzado belleza y salud',
-                                                 'moda, calzado, belleza y salud',
-                                                 'moda,calzado,belleza y salud',
-                                                 'otros',
-                                                 'otros productos',
-                                                 'other',
-                                                 'tiempo libre')
-                then 'Consumer Goods'
-                    when local_category_level1 in ('busco empleo',
-                                                   'servicios',
-                                                   'negocios,maquinaria y construccion',
-                                                   'negocios maquinaria y construccion',
-                                                   'negocios maquinaria y construcción',
-                                                   'negocios maquinaria y construcci髇',
-                                                   'negocios maquinaria y construcci�n',
-                                                   'negocios, maquinaria y construcción')
-                    and local_main_category in ('servicios',
-                                                'servicios negocios y empleo',
-                                                'servicios, negocios y empleo',
-                                                'servicios,negocios y empleo')
-                then 'Professional Services'
-                    when local_category_level1 in ('arrendar',
-                                                   'arriendo',
-                                                   'comprar') 
-                    and local_main_category in ('inmuebles')
-                then 'Real Estate'
-                    when local_main_category in ('unknown',
-                                                 'undefined')
-                then 'Undefined'
-                else 'Undefined'
-                end vertical,
+                {6}
+                {3}
+                {4}   
+                count(distinct row(ad_id, environment_id)) unique_leads
+            from
+                yapocl_databox.insights_events_behavioral_fact_layer_365d
+            where
+                cast(date_parse(cast(year as varchar) || '-' || 
+                cast(month as varchar) || '-' ||
+                cast(day as varchar),'%Y-%c-%e') as date) = date '{0}'
+                    and event_type in ('Call','SMS','Send','Show') and lead_id != 'unknown'
+            group by 1,2,3,4,5
+                union all
+            select
+                {1}  
+                'All Yapo' platform,
+                {6}
+                {3}
                 'All' main_category,   
                 count(distinct row(ad_id, environment_id)) unique_leads
             from
                 yapocl_databox.insights_events_behavioral_fact_layer_365d
             where
-                cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) = date '{0}'
+                cast(date_parse(cast(year as varchar) || '-' || 
+                cast(month as varchar) || '-' ||
+                cast(day as varchar),'%Y-%c-%e') as date) = date '{0}'
                     and event_type in ('Call','SMS','Send','Show') and lead_id != 'unknown'
             group by 1,2,3,4,5
                 union all
             select
-                cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) timedate,  
+                {1}  
                 'All Yapo' platform,
                 'All Yapo' traffic_channel,
-                case  
-                    when local_category_level1 in ('arriendo de temporada') and local_main_category in ('inmuebles') then 'Holiday Rental' 
-                    when local_category_level1 in ('ofertas de empleo')
-                    and local_main_category in ('servicios',
-                                                'servicios negocios y empleo',
-                                                'servicios, negocios y empleo',
-                                                'servicios,negocios y empleo')
-                    then 'Jobs'
-                    when local_main_category in ('computadores & electrónica',
-                                                 'computadore & electronica',
-                                                 'computadores & electr�nica',
-                                                 'computadores y electronica',
-                                                 'futura mamá',
-                                                 'futura mam�',
-                                                 'futura mama bebes y ninos',
-                                                 'futura mamá bebés y niños',
-                                                 'futura mamá, bebés y niños',
-                                                 'futura mamá,bebés y niños',
-                                                 'futura mam� beb�s y ni�os',
-                                                 'futura mam�,beb�s y ni�os',
-                                                 'hogar',
-                                                 'moda',
-                                                 'moda calzado belleza y salud',
-                                                 'moda, calzado, belleza y salud',
-                                                 'moda,calzado,belleza y salud',
-                                                 'otros',
-                                                 'otros productos',
-                                                 'other',
-                                                 'tiempo libre')
-                then 'Consumer Goods'
-                    when local_category_level1 in ('busco empleo',
-                                                   'servicios',
-                                                   'negocios,maquinaria y construccion',
-                                                   'negocios maquinaria y construccion',
-                                                   'negocios maquinaria y construcción',
-                                                   'negocios maquinaria y construcci髇',
-                                                   'negocios maquinaria y construcci�n',
-                                                   'negocios, maquinaria y construcción')
-                    and local_main_category in ('servicios',
-                                                'servicios negocios y empleo',
-                                                'servicios, negocios y empleo',
-                                                'servicios,negocios y empleo')
-                then 'Professional Services'
-                    when local_category_level1 in ('arrendar',
-                                                   'arriendo',
-                                                   'comprar') 
-                    and local_main_category in ('inmuebles')
-                then 'Real Estate'
-                    when local_main_category in ('unknown',
-                                                 'undefined')
-                then 'Undefined'
-                else 'Undefined'
-                end vertical,
-                case when local_main_category in ('computadores & electrónica',
-                                                  'computadore & electronica',
-                                                  'computadores & electr�nica',
-                                                  'computadores y electronica')
-                then 'Computadores & electrónica'
-                    when local_main_category in ('futura mamá',
-                                                 'futura mam�',
-                                                 'futura mama bebes y ninos',
-                                                 'futura mamá bebés y niños',
-                                                 'futura mamá, bebés y niños',
-                                                 'futura mamá,bebés y niños',
-                                                 'futura mam� beb�s y ni�os',
-                                                 'futura mam�,beb�s y ni�os')
-                then 'Futura mamá, bebés y niños'
-                    when local_main_category in ('hogar') then 'Hogar'
-                    when local_main_category in ('inmuebles') then 'Inmuebles'
-                    when local_main_category in ('moda',
-                                                 'moda calzado belleza y salud',
-                                                 'moda, calzado, belleza y salud',
-                                                 'moda,calzado,belleza y salud')
-                then 'Moda, calzado, belleza y salud'
-                    when local_main_category in ('otros',
-                                                 'otros productos',
-                                                 'other')
-                then 'Otros'
-                    when local_main_category in ('servicios',
-                                                 'servicios negocios y empleo',
-                                                 'servicios, negocios y empleo',
-                                                 'servicios,negocios y empleo')
-                then 'Servicios, negocios y empleo'
-                    when local_main_category in ('tiempo libre') then 'Tiempo libre'
-                    when local_main_category in ('vehiculos','vehículos','veh�culos') then 'Vehículos'
-                    when local_main_category in ('unknown',
-                                                 'undefined')
-                then 'Undefined'
-                    when local_main_category is null then 'Undefined'
-                    else local_main_category
-                end main_category,
+                {3}
+                {4}
                 count(distinct row(ad_id, environment_id)) unique_leads
             from
                 yapocl_databox.insights_events_behavioral_fact_layer_365d
             where
-                cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) = date '{0}'
+                cast(date_parse(cast(year as varchar) || '-' || 
+                cast(month as varchar) || '-' ||
+                cast(day as varchar),'%Y-%c-%e') as date) = date '{0}'
                     and event_type in ('Call','SMS','Send','Show') and lead_id != 'unknown'
             group by 1,2,3,4,5
                 union all
             select
-                cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) timedate,  
+                {1}  
                 'All Yapo' platform,
                 'All Yapo' traffic_channel,
-                case  
-                    when local_category_level1 in ('arriendo de temporada') and local_main_category in ('inmuebles') then 'Holiday Rental' 
-                    when local_category_level1 in ('ofertas de empleo')
-                    and local_main_category in ('servicios',
-                                                'servicios negocios y empleo',
-                                                'servicios, negocios y empleo',
-                                                'servicios,negocios y empleo')
-                    then 'Jobs'
-                    when local_main_category in ('computadores & electrónica',
-                                                 'computadore & electronica',
-                                                 'computadores & electr�nica',
-                                                 'computadores y electronica',
-                                                 'futura mamá',
-                                                 'futura mam�',
-                                                 'futura mama bebes y ninos',
-                                                 'futura mamá bebés y niños',
-                                                 'futura mamá, bebés y niños',
-                                                 'futura mamá,bebés y niños',
-                                                 'futura mam� beb�s y ni�os',
-                                                 'futura mam�,beb�s y ni�os',
-                                                 'hogar',
-                                                 'moda',
-                                                 'moda calzado belleza y salud',
-                                                 'moda, calzado, belleza y salud',
-                                                 'moda,calzado,belleza y salud',
-                                                 'otros',
-                                                 'otros productos',
-                                                 'other',
-                                                 'tiempo libre')
-                then 'Consumer Goods'
-                    when local_category_level1 in ('busco empleo',
-                                                   'servicios',
-                                                   'negocios,maquinaria y construccion',
-                                                   'negocios maquinaria y construccion',
-                                                   'negocios maquinaria y construcción',
-                                                   'negocios maquinaria y construcci髇',
-                                                   'negocios maquinaria y construcci�n',
-                                                   'negocios, maquinaria y construcción')
-                    and local_main_category in ('servicios',
-                                                'servicios negocios y empleo',
-                                                'servicios, negocios y empleo',
-                                                'servicios,negocios y empleo')
-                then 'Professional Services'
-                    when local_category_level1 in ('arrendar',
-                                                   'arriendo',
-                                                   'comprar') 
-                    and local_main_category in ('inmuebles')
-                then 'Real Estate'
-                    when local_main_category in ('unknown',
-                                                 'undefined')
-                then 'Undefined'
-                    else 'Undefined'
-                end vertical,
+                {3}
                 'All' main_category,
                 count(distinct row(ad_id, environment_id)) unique_leads
             from
                 yapocl_databox.insights_events_behavioral_fact_layer_365d
             where
-                cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) = date '{0}'
+                cast(date_parse(cast(year as varchar) || '-' || 
+                cast(month as varchar) || '-' ||
+                cast(day as varchar),'%Y-%c-%e') as date) = date '{0}'
                     and event_type in ('Call','SMS','Send','Show') and lead_id != 'unknown'
             group by 1,2,3,4,5
                 union all
             select
-                cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) timedate,  
+                {1}  
                 'All Yapo' platform,
-                case when traffic_channel = 'Direct' then 'Direct'
-                    when traffic_channel = 'SEO' then 'SEO'
-                    when traffic_channel in ('Social Media',
-                                             'Social Media Paid',
-                                             'Paid search',
-                                             'Display')
-                then 'Sponsored Links'
-                    when traffic_channel in ('Affiliates',
-                                             'Email marketing',
-                                             'unknown')
-                then 'Others'
-                end traffic_channel,
+                {6}
                 'All Yapo' vertical,
                 'All' main_category,
                 count(distinct row(ad_id, environment_id)) unique_leads
             from
                 yapocl_databox.insights_events_behavioral_fact_layer_365d
             where
-                cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) = date '{0}'
+                cast(date_parse(cast(year as varchar) || '-' || 
+                cast(month as varchar) || '-' ||
+                cast(day as varchar),'%Y-%c-%e') as date) = date '{0}'
                     and event_type in ('Call','SMS','Send','Show') and lead_id != 'unknown'
             group by 1,2,3,4,5
                 union all
             select
-                cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) timedate,  
-                case when (device_type = 'desktop' and (object_url like 
-                '%www2.yapo.cl%' or object_url like '%//yapo.cl%')) or 
-                product_type = 'Web' or object_url like '%www.yapo.cl%' or
-                (device_type = 'desktop' and product_type = 'unknown') then 'Web'
-                    when ((device_type = 'mobile' or device_type = 'tablet')
-                    and (object_url like '%www2.yapo.cl%'
-                    or object_url like '%//yapo.cl%')) or product_type = 'M-Site'
-                    or object_url like '%m.yapo.cl%' or ((device_type = 'mobile'
-                    or device_type = 'tablet') and product_type = 'unknown')
-                then 'MSite'
-                    when ((device_type = 'mobile' or device_type = 'tablet')
-                    and object_url is not null and product_type = 'AndroidApp')
-                    or product_type = 'AndroidApp'
-                then 'AndroidApp'
-                    when ((device_type = 'mobile' or device_type = 'tablet')
-                    and object_url is not null and product_type = 'iOSApp')
-                    or product_type = 'iOSApp' or product_type = 'iPadApp'
-                then 'iOSApp'
-                end platform,
+                {1}  
+                {2}
                 'All Yapo' traffic_channel,
-                case  
-                    when local_category_level1 in ('arriendo de temporada') and local_main_category in ('inmuebles') then 'Holiday Rental' 
-                    when local_category_level1 in ('ofertas de empleo')
-                    and local_main_category in ('servicios',
-                                                'servicios negocios y empleo',
-                                                'servicios, negocios y empleo',
-                                                'servicios,negocios y empleo')
-                    then 'Jobs'
-                    when local_main_category in ('computadores & electrónica',
-                                                 'computadore & electronica',
-                                                 'computadores & electr�nica',
-                                                 'computadores y electronica',
-                                                 'futura mamá',
-                                                 'futura mam�',
-                                                 'futura mama bebes y ninos',
-                                                 'futura mamá bebés y niños',
-                                                 'futura mamá, bebés y niños',
-                                                 'futura mamá,bebés y niños',
-                                                 'futura mam� beb�s y ni�os',
-                                                 'futura mam�,beb�s y ni�os',
-                                                 'hogar',
-                                                 'moda',
-                                                 'moda calzado belleza y salud',
-                                                 'moda, calzado, belleza y salud',
-                                                 'moda,calzado,belleza y salud',
-                                                 'otros',
-                                                 'otros productos',
-                                                 'other',
-                                                 'tiempo libre')
-                then 'Consumer Goods'
-                    when local_category_level1 in ('busco empleo',
-                                                   'servicios',
-                                                   'negocios,maquinaria y construccion',
-                                                   'negocios maquinaria y construccion',
-                                                   'negocios maquinaria y construcción',
-                                                   'negocios maquinaria y construcci髇',
-                                                   'negocios maquinaria y construcci�n',
-                                                   'negocios, maquinaria y construcción')
-                    and local_main_category in ('servicios',
-                                                'servicios negocios y empleo',
-                                                'servicios, negocios y empleo',
-                                                'servicios,negocios y empleo')
-                then 'Professional Services'
-                    when local_category_level1 in ('arrendar',
-                                                   'arriendo',
-                                                   'comprar') 
-                    and local_main_category in ('inmuebles')
-                then 'Real Estate'
-                    when local_main_category in ('unknown',
-                                                 'undefined')
-                then 'Undefined'
-                    else 'Undefined'
-                end vertical,
-                case when local_main_category in ('computadores & electrónica',
-                                                  'computadore & electronica',
-                                                  'computadores & electr�nica',
-                                                  'computadores y electronica')
-                then 'Computadores & electrónica'
-                    when local_main_category in ('futura mamá',
-                                                 'futura mam�',
-                                                 'futura mama bebes y ninos',
-                                                 'futura mamá bebés y niños',
-                                                 'futura mamá, bebés y niños',
-                                                 'futura mamá,bebés y niños',
-                                                 'futura mam� beb�s y ni�os',
-                                                 'futura mam�,beb�s y ni�os')
-                then 'Futura mamá, bebés y niños'
-                    when local_main_category in ('hogar') then 'Hogar'
-                    when local_main_category in ('inmuebles') then 'Inmuebles'
-                    when local_main_category in ('moda',
-                                                 'moda calzado belleza y salud',
-                                                 'moda, calzado, belleza y salud',
-                                                 'moda,calzado,belleza y salud')
-                then 'Moda, calzado, belleza y salud'
-                    when local_main_category in ('otros',
-                                                 'otros productos',
-                                                 'other')
-                then 'Otros'
-                    when local_main_category in ('servicios',
-                                                 'servicios negocios y empleo',
-                                                 'servicios, negocios y empleo',
-                                                 'servicios,negocios y empleo')
-                then 'Servicios, negocios y empleo'
-                    when local_main_category in ('tiempo libre') then 'Tiempo libre'
-                    when local_main_category in ('vehiculos','vehículos','veh�culos') then 'Vehículos'
-                    when local_main_category in ('unknown',
-                                                 'undefined')
-                then 'Undefined'
-                    when local_main_category is null then 'Undefined'
-                    else local_main_category
-                end main_category,
+                {3}
+                {4}
                 count(distinct row(ad_id, environment_id)) unique_leads
             from
                 yapocl_databox.insights_events_behavioral_fact_layer_365d
             where
-                cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) = date '{0}'
+                cast(date_parse(cast(year as varchar) || '-' || 
+                cast(month as varchar) || '-' ||
+                cast(day as varchar),'%Y-%c-%e') as date) = date '{0}'
                     and event_type in ('Call','SMS','Send','Show') and lead_id != 'unknown'
             group by 1,2,3,4,5
                 union all
             select
-                cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) timedate,  
-                case when (device_type = 'desktop' and (object_url like 
-                '%www2.yapo.cl%' or object_url like '%//yapo.cl%')) or 
-                product_type = 'Web' or object_url like '%www.yapo.cl%' or
-                (device_type = 'desktop' and product_type = 'unknown') then 'Web'
-                    when ((device_type = 'mobile' or device_type = 'tablet')
-                    and (object_url like '%www2.yapo.cl%'
-                    or object_url like '%//yapo.cl%')) or product_type = 'M-Site'
-                    or object_url like '%m.yapo.cl%' or ((device_type = 'mobile'
-                    or device_type = 'tablet') and product_type = 'unknown')
-                then 'MSite'
-                    when ((device_type = 'mobile' or device_type = 'tablet')
-                    and object_url is not null and product_type = 'AndroidApp')
-                    or product_type = 'AndroidApp'
-                then 'AndroidApp'
-                    when ((device_type = 'mobile' or device_type = 'tablet')
-                    and object_url is not null and product_type = 'iOSApp')
-                    or product_type = 'iOSApp' or product_type = 'iPadApp'
-                then 'iOSApp'
-                end platform,
+                {1}  
+                {2}
                 'All Yapo' traffic_channel,
-                case  
-                    when local_category_level1 in ('arriendo de temporada') and local_main_category in ('inmuebles') then 'Holiday Rental' 
-                    when local_category_level1 in ('ofertas de empleo')
-                    and local_main_category in ('servicios',
-                                                'servicios negocios y empleo',
-                                                'servicios, negocios y empleo',
-                                                'servicios,negocios y empleo')
-                    then 'Jobs'
-                    when local_main_category in ('computadores & electrónica',
-                                                 'computadore & electronica',
-                                                 'computadores & electr�nica',
-                                                 'computadores y electronica',
-                                                 'futura mamá',
-                                                 'futura mam�',
-                                                 'futura mama bebes y ninos',
-                                                 'futura mamá bebés y niños',
-                                                 'futura mamá, bebés y niños',
-                                                 'futura mamá,bebés y niños',
-                                                 'futura mam� beb�s y ni�os',
-                                                 'futura mam�,beb�s y ni�os',
-                                                 'hogar',
-                                                 'moda',
-                                                 'moda calzado belleza y salud',
-                                                 'moda, calzado, belleza y salud',
-                                                 'moda,calzado,belleza y salud',
-                                                 'otros',
-                                                 'otros productos',
-                                                 'other',
-                                                 'tiempo libre')
-                then 'Consumer Goods'
-                    when local_category_level1 in ('busco empleo',
-                                                   'servicios',
-                                                   'negocios,maquinaria y construccion',
-                                                   'negocios maquinaria y construccion',
-                                                   'negocios maquinaria y construcción',
-                                                   'negocios maquinaria y construcci髇',
-                                                   'negocios maquinaria y construcci�n',
-                                                   'negocios, maquinaria y construcción')
-                    and local_main_category in ('servicios',
-                                                'servicios negocios y empleo',
-                                                'servicios, negocios y empleo',
-                                                'servicios,negocios y empleo')
-                then 'Professional Services'
-                    when local_category_level1 in ('arrendar',
-                                                   'arriendo',
-                                                   'comprar') 
-                    and local_main_category in ('inmuebles')
-                then 'Real Estate'
-                    when local_main_category in ('unknown',
-                                                 'undefined')
-                then 'Undefined'
-                    else 'Undefined'
-                end vertical,
+                {3}
                 'All' main_category,
                 count(distinct row(ad_id, environment_id)) unique_leads
             from
                 yapocl_databox.insights_events_behavioral_fact_layer_365d
             where
-                cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) = date '{0}'
+                cast(date_parse(cast(year as varchar) || '-' || 
+                cast(month as varchar) || '-' ||
+                cast(day as varchar),'%Y-%c-%e') as date) = date '{0}'
                     and event_type in ('Call','SMS','Send','Show') and lead_id != 'unknown'
             group by 1,2,3,4,5
                 union all
             select
-                cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) timedate,  
-                case when (device_type = 'desktop' and (object_url like 
-                '%www2.yapo.cl%' or object_url like '%//yapo.cl%')) or 
-                product_type = 'Web' or object_url like '%www.yapo.cl%' or
-                (device_type = 'desktop' and product_type = 'unknown') then 'Web'
-                    when ((device_type = 'mobile' or device_type = 'tablet')
-                    and (object_url like '%www2.yapo.cl%'
-                    or object_url like '%//yapo.cl%')) or product_type = 'M-Site'
-                    or object_url like '%m.yapo.cl%' or ((device_type = 'mobile'
-                    or device_type = 'tablet') and product_type = 'unknown')
-                then 'MSite'
-                    when ((device_type = 'mobile' or device_type = 'tablet')
-                    and object_url is not null and product_type = 'AndroidApp')
-                    or product_type = 'AndroidApp'
-                then 'AndroidApp'
-                    when ((device_type = 'mobile' or device_type = 'tablet')
-                    and object_url is not null and product_type = 'iOSApp')
-                    or product_type = 'iOSApp' or product_type = 'iPadApp'
-                then 'iOSApp'
-                end platform,
+                {1}  
+                {2}
                 'All Yapo' traffic_channel,
                 'All Yapo' vertical,
                 'All' main_category,
@@ -1990,63 +644,38 @@ class Query:
             from
                 yapocl_databox.insights_events_behavioral_fact_layer_365d
             where
-                cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) = date '{0}'
+                cast(date_parse(cast(year as varchar) || '-' || 
+                cast(month as varchar) || '-' ||
+                cast(day as varchar),'%Y-%c-%e') as date) = date '{0}'
                     and event_type in ('Call','SMS','Send','Show') and lead_id != 'unknown'
             group by 1,2,3,4,5
                 union all
             select
-                cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) timedate,  
-                case when (device_type = 'desktop' and (object_url like 
-                '%www2.yapo.cl%' or object_url like '%//yapo.cl%')) or 
-                product_type = 'Web' or object_url like '%www.yapo.cl%' or
-                (device_type = 'desktop' and product_type = 'unknown') then 'Web'
-                    when ((device_type = 'mobile' or device_type = 'tablet')
-                    and (object_url like '%www2.yapo.cl%'
-                    or object_url like '%//yapo.cl%')) or product_type = 'M-Site'
-                    or object_url like '%m.yapo.cl%' or ((device_type = 'mobile'
-                    or device_type = 'tablet') and product_type = 'unknown')
-                then 'MSite'
-                    when ((device_type = 'mobile' or device_type = 'tablet')
-                    and object_url is not null and product_type = 'AndroidApp')
-                    or product_type = 'AndroidApp'
-                then 'AndroidApp'
-                    when ((device_type = 'mobile' or device_type = 'tablet')
-                    and object_url is not null and product_type = 'iOSApp')
-                    or product_type = 'iOSApp' or product_type = 'iPadApp'
-                then 'iOSApp'
-                end platform,
-                case when traffic_channel = 'Direct' then 'Direct'
-                    when traffic_channel = 'SEO' then 'SEO'
-                    when traffic_channel in ('Social Media',
-                                             'Social Media Paid',
-                                             'Paid search',
-                                             'Display')
-                then 'Sponsored Links'
-                    when traffic_channel in ('Affiliates',
-                                             'Email marketing',
-                                             'unknown')
-                then 'Others'
-                end traffic_channel,
+                {1}  
+                {2}
+                {6}
                 'All Yapo' vertical,
                 'All' main_category,
                 count(distinct row(ad_id, environment_id)) unique_leads
             from
                 yapocl_databox.insights_events_behavioral_fact_layer_365d
             where
-                cast(date_parse(cast(year as varchar) || '-' ||
-            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
-            as date) = date '{0}'
+                cast(date_parse(cast(year as varchar) || '-' || 
+                cast(month as varchar) || '-' ||
+                cast(day as varchar),'%Y-%c-%e') as date) = date '{0}'
                     and event_type in ('Call','SMS','Send','Show') and lead_id != 'unknown'
             group by 1,2,3,4,5
             order by 1,2,3,4,5
             ) a
         group by 1,2,3,4,5
         order by 1,2,3,4,5
-               """.format(self.params.get_date_from())
+        """.format(self.params.get_date_from(),
+                   self.get_query_fields('timedate'),
+                   self.get_query_fields('platform'),
+                   self.get_query_fields('vertical'),
+                   self.get_query_fields('main_category'),
+                   self.get_query_fields('active_users_that_do_adviews'),
+                   self.get_query_fields('traffic_channel'))
         return command
 
     def query_dau_platform(self) -> str:
