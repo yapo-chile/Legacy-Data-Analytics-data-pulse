@@ -28,6 +28,15 @@ def source_unique_leads(params: ReadParams,
     athena.close_connection()
     return data_athena
 
+# Query unique leads from Pulse bucket
+def source_conversion_to_lead(params: ReadParams,
+                              config: getConf):
+    athena = Athena(conf=CONFIG.athenaConf)
+    query = Query(config, params)
+    data_athena = athena.get_data(query.query_conversion_to_lead())
+    athena.close_connection()
+    return data_athena
+
 # Query buyers from data warehouse
 def source_buyers(params: ReadParams,
                   config: getConf):
@@ -52,13 +61,16 @@ def source_dau_platform(params: ReadParams,
 def write_data_pulse_to_dwh(params: ReadParams,
                             config: getConf,
                             data_traffic_metrics: pd.DataFrame,
-                            data_unique_leads: pd.DataFrame) -> None:
+                            data_unique_leads: pd.DataFrame,
+                            data_conversion_to_lead: pd.DataFrame) -> None:
     query = Query(config, params)
     DB_WRITE = Database(conf=config.db)
     DB_WRITE.execute_command(query.delete_traffic_metrics())
     DB_WRITE.execute_command(query.delete_unqiue_leads())
+    DB_WRITE.execute_command(query.delete_conversion_to_lead())
     DB_WRITE.insert_data_traffic_metrics(data_traffic_metrics)
     DB_WRITE.insert_data_unique_leads(data_unique_leads)
+    DB_WRITE.insert_data_conversion_to_lead(data_conversion_to_lead)
     DB_WRITE.close_connection()
 
 # Write data from Pulse to dwh
@@ -86,10 +98,12 @@ if __name__ == '__main__':
     # Get data from Pulse and write in our dwh
     DATA_TRAFFIC_METRICS = source_traffic_metrics(PARAMS, CONFIG)
     DATA_UNIQUE_LEADS = source_unique_leads(PARAMS, CONFIG)
+    DATA_CONVERSION_TO_LEAD = source_conversion_to_lead(PARAMS, CONFIG)
     write_data_pulse_to_dwh(PARAMS,
                             CONFIG,
                             DATA_TRAFFIC_METRICS,
-                            DATA_UNIQUE_LEADS)
+                            DATA_UNIQUE_LEADS,
+                            DATA_CONVERSION_TO_LEAD)
     # Get data for aggregations in our data warehouse
     DATA_BUYERS = source_buyers(PARAMS, CONFIG)
     DATA_DAU_PLATFORM = source_dau_platform(PARAMS, CONFIG)

@@ -46,6 +46,8 @@
   sequence:
     commands:
     - script: |-
+        sudo docker pull containers.mpi-internal.com/yapo/data-pulse-traffic-metrics:latest
+        
         sudo docker run -v /home/bnbiuser/secrets/pulse_auth:/app/pulse-secret \
                         -v /home/bnbiuser/secrets/dw_db:/app/db-secret \
                         -e APP_PULSE_SECRET=/app/pulse-secret \

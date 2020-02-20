@@ -101,6 +101,29 @@ class Database:
             self.log.info('CLOSE CURSOR %s', self.conf.table_traffic_metrics)
             cursor.close()
 
+    def insert_data_conversion_to_lead(self, data_dict: pd.DataFrame) -> None:
+        self.log.info('INSERT INTO %s', self.conf.table_conversion_lead)
+        page_size: int = 10000
+        with self.connection.cursor() as cursor:
+            psycopg2.extras \
+                .execute_values(cursor,
+                                """ INSERT INTO """ +
+                                self.conf.table_conversion_lead +
+                                """ ( timedate,
+                                      users_doing_adviews,
+                                      users_converting_to_lead
+                                    )
+                                    VALUES %s; """, ((
+                                        row.timedate,
+                                        row.users_doing_adviews,
+                                        row.users_converting_to_lead
+                                    ) for row in data_dict.itertuples()),
+                                page_size=page_size)
+            self.log.info('INSERT %s COMMIT.', self.conf.table_conversion_lead)
+            self.connection.commit()
+            self.log.info('CLOSE CURSOR %s', self.conf.table_conversion_lead)
+            cursor.close()
+
     def insert_data_unique_leads(self, data_dict: pd.DataFrame) -> None:
         self.log.info('INSERT INTO %s', self.conf.table_unique_leads)
         page_size: int = 10000

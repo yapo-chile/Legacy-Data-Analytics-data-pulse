@@ -42,6 +42,7 @@ class AppConfig:
         table_unique_leads: str = environ.var("dm_pulse.unique_leads")
         table_buyers: str = environ.var("dm_peak.buyers")
         table_dau_platform: str = environ.var("dm_peak.dau_platforms")
+        table_conversion_lead: str = environ.var("dm_peak.conversion_to_lead")
     athenaConf = environ.group(AthenaConfig)
     db = environ.group(DBConfig)
 
