@@ -702,8 +702,55 @@ class Query:
                         and timedate::date = '{0}'
                     group by 1
                     order by 1 """.format(self.params.get_date_from())
-
         return command
+
+    def query_conversion_to_lead(self) -> str:
+        """
+        Method that return query of conversion to lead
+        """
+        command = """
+        select 
+            cast(date_parse(cast(year as varchar) || '-' ||
+            cast(month as varchar) || '-' || cast(day as
+            varchar),'%Y-%c-%e') as date) timedate,
+            count(distinct case when event_type = 'View' and
+            object_type = 'ClassifiedAd' then environment_id end)
+            users_doing_adviews,
+            count(distinct case when event_type = 'Show' or object_url like
+            '%form_adreply%' then environment_id end) users_converting_to_lead
+        from
+            yapocl_databox.insights_events_behavioral_fact_layer_365d
+        where
+            local_main_category in ('computadores & electrónica',
+                                    'computadore & electronica',
+                                    'computadores & electr�nica',
+                                    'computadores y electronica',
+                                    'futura mamá',
+                                    'futura mam�',
+                                    'futura mama bebes y ninos',
+                                    'futura mamá bebés y niños',
+                                    'futura mamá, bebés y niños',
+                                    'futura mamá,bebés y niños',
+                                    'futura mam� beb�s y ni�os',
+                                    'futura mam�,beb�s y ni�os',
+                                    'hogar',
+                                    'moda',
+                                    'moda calzado belleza y salud',
+                                    'moda, calzado, belleza y salud',
+                                    'moda,calzado,belleza y salud',
+                                    'otros',
+                                    'otros productos',
+                                    'other',
+                                    'tiempo libre')
+            and product_type = 'M-Site'
+            and cast(date_parse(cast(year as varchar) || '-' ||
+            cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e')
+            as date) = date '{0}'
+        group by 1
+        order by 1
+        """.format(self.params.get_date_from())
+        return command
+
 
     def delete_traffic_metrics(self) -> str:
         """
@@ -722,6 +769,17 @@ class Query:
         """
         command = """
                     delete from """ + self.conf.db.table_unique_leads + """
+                    where timedate::date = 
+                    '""" + self.params.get_date_from() + """'::date """
+
+        return command
+
+    def delete_conversion_to_lead(self) -> str:
+        """
+        Method that returns events of the day
+        """
+        command = """
+                    delete from """ + self.conf.db.table_conversion_lead + """
                     where timedate::date = 
                     '""" + self.params.get_date_from() + """'::date """
 
