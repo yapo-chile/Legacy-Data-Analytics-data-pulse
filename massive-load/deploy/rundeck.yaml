@@ -2,13 +2,15 @@
   description: |-
         sudo docker run -v /home/bnbiuser/secrets/pulse_auth:/app/pulse-secret \
                         -v /home/bnbiuser/secrets/dw_db:/app/db-secret \
+                        -v /home/bnbiuser/secrets/pickles:/app/pickles \
                         -e APP_PULSE_SECRET=/app/pulse-secret \
                         -e APP_DB_SECRET=/app/db-secret \
-                        containers.mpi-internal.com/yapo/massive-load:latest
+                        -e APP_PICKLES=/app/pickles \
+                        containers.mpi-internal.com/yapo/data-pulse-massive-load:latest
   executionEnabled: true
-  group: DOCKER/PULSE
+  group: PIPELINE-ANALIZER
   loglevel: DEBUG
-  name: Pulse - Project Name Template
+  name: Massive load process 
   nodeFilterEditable: false
   nodefilters:
     dispatch:
@@ -36,7 +38,7 @@
   schedule:
     month: '*'
     time:
-      hour: '03'
+      hour: '07'
       minute: '0'
       seconds: '0'
     weekday:
@@ -46,11 +48,15 @@
   sequence:
     commands:
     - script: |-
+        sudo docker pull containers.mpi-internal.com/yapo/data-pulse-massive-load:latest
+        
         sudo docker run -v /home/bnbiuser/secrets/pulse_auth:/app/pulse-secret \
                         -v /home/bnbiuser/secrets/dw_db:/app/db-secret \
+                        -v /home/bnbiuser/secrets/pickles:/app/pickles \
                         -e APP_PULSE_SECRET=/app/pulse-secret \
                         -e APP_DB_SECRET=/app/db-secret \
-                        containers.mpi-internal.com/yapo/massive-load:latest
+                        -e APP_PICKLES=/app/pickles \
+                        containers.mpi-internal.com/yapo/data-pulse-massive-load:latest
     keepgoing: false
     strategy: node-first
   timeZone: America/Santiago
