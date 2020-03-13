@@ -21,15 +21,6 @@ class Query:
             """
         return query
 
-#    def query_base_postgresql_blocket(self) -> str:
-#        """
-#        Method return str with query
-#        """
-#        query = """
-#        select '2'
-#        """
-#        return query
-
     def query_base_pulse(self) -> str:
         """
         Method return str with query
