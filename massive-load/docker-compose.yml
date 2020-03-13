@@ -9,6 +9,12 @@ services:
     environment:
       APP_PULSE_SECRET: /app/pulse-secret
       APP_DB_SECRET: /app/db-secret
+      APP_DW_SECRET: /app/dw-secret
+      APP_PICKLES: /app/pickles
     volumes:
-      - /keys/bnbiuser:/app/db-secret
-      - /keys/zendesk_auth:/app/pulse-secret
+      - ./secrets/blocket/secrets_blocket:/app/db-secret
+      - ./secrets/dw/secrets_DW:/app/dw-secret
+      - ./secrets/pulse/secrets_pulse:/app/pulse-secret
+      - ./pickles:/app/pickles
+
+

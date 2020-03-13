@@ -1,9 +1,10 @@
+import os
 import environ
 
 
 INI_PULSE = environ.secrets.INISecrets.from_path_in_env("APP_PULSE_SECRET")
 INI_DB = environ.secrets.INISecrets.from_path_in_env("APP_DB_SECRET")
-INI_DB_DW = environ.secrets.INISecrets.from_path_in_env("APP_DB_DW_SECRET")
+INI_DW = environ.secrets.INISecrets.from_path_in_env("APP_DW_SECRET")
 
 
 @environ.config(prefix="APP")
@@ -18,19 +19,18 @@ class AppConfig:
         AthenaConfig class represeting the configuration to access
         pulse service
         """
-        s3_bucket: str = INI_PULSE.secret(
-            name="bucket", default=environ.var())
-        user: str = INI_PULSE.secret(
-            name="user", default=environ.var())
-        access_key: str = INI_PULSE.secret(
-            name="accesskey", default=environ.var())
-        secret_key: str = INI_PULSE.secret(
-            name="secretkey", default=environ.var())
-        region: str = INI_PULSE.secret(
-            name="region", default=environ.var())
+        s3_bucket: str = INI_PULSE.secret(name="bucket",
+                                          default=environ.var())
+        user: str = INI_PULSE.secret(name="user",
+                                     default=environ.var())
+        access_key: str = INI_PULSE.secret(name="accesskey",
+                                           default=environ.var())
+        secret_key: str = INI_PULSE.secret(name="secretkey",
+                                           default=environ.var())
+        region: str = INI_PULSE.secret(name="region", default=environ.var())
 
     @environ.config(prefix="DB")
-    class DBConfig:
+    class DB_BlocketConfig:
         """
         DBConfig Class representing the configuration to access the database
         """
@@ -40,21 +40,30 @@ class AppConfig:
         user: str = INI_DB.secret(name="user", default=environ.var())
         password: str = INI_DB.secret(name="password", default=environ.var())
         table: str = environ.var("dm_analysis.db_version")
-    
-    @environ.config(prefix="DB")
-    class DBConfig:
+
+    @environ.config(prefix="DW")
+    class DB_DWConfig:
         """
         DBConfig Class representing the configuration to access the database
         """
-        host: str = INI_DB_DW.secret(name="host", default=environ.var())
-        port: int = INI_DB_DW.secret(name="port", default=environ.var())
-        name: str = INI_DB_DW.secret(name="dbname", default=environ.var())
-        user: str = INI_DB_DW.secret(name="user", default=environ.var())
-        password: str = INI_DB_DW.secret(name="password", default=environ.var())
-        table: str = environ.var("dm_analysis.db_version")
+        host: str = INI_DW.secret(name="host", default=environ.var())
+        port: int = INI_DW.secret(name="port", default=environ.var())
+        name: str = INI_DW.secret(name="dbname", default=environ.var())
+        user: str = INI_DW.secret(name="user", default=environ.var())
+        password: str = INI_DW.secret(name="password", default=environ.var())
+        table: str = environ.var("dm_analysis.test_partners_leads")
+
+    @environ.config(prefix="PICKLES")
+    class PicklesConfig:
+        """
+        Pickles files path to conversion process
+        """
+        pickles_path: str = os.environ.get("APP_PICKLES")
+
     athenaConf = environ.group(AthenaConfig)
-    dbBlocket = environ.group(DBConfig)
-    dbDW = environ.group(DBConfig)
+    blocketConf = environ.group(DB_BlocketConfig)
+    DWConf = environ.group(DB_DWConfig)
+    PicklesConf = environ.group(PicklesConfig)
 
 
 def getConf():
