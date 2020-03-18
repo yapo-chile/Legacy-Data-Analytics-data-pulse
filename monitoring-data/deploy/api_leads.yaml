@@ -33,10 +33,21 @@
         recipients: bi_team@schibsted.cl
         subject: ${job.execid} ${execution.status} ${job.name}
   notifyAvgDurationThreshold: null
+  schedule:
+    month: '*'
+    time:
+      hour: '3'
+      minute: '30'
+      seconds: '0'
+    weekday:
+      day: '*'
+    year: '*'
   scheduleEnabled: true
   sequence:
     commands:
     - script: |-
+        sudo docker pull containers.mpi-internal.com/yapo/dp-monitoring-data:latest
+
         sudo docker run -v /home/bnbiuser/secrets/pulse_auth:/app/pulse-secret \
                         -v /home/bnbiuser/secrets/dw_db:/app/db-secret \
                         -e APP_PULSE_SECRET=/app/pulse-secret \

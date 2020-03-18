@@ -6,17 +6,21 @@ class Query:
     def query_events(self, date_from, date_to):
 
         query = """
-                select event_type,
-                   object_type,
-                   event_name,
-                   event_date,
-                   sum(events) as amount_events
-                from yapocl_databox.insights_events_behavioral_counts_365d 
-                where event_date between '""" + date_from + """'
-                and '""" + date_to + """'
-                group by 1,2,3,4
-                order by 1,2,3,4 desc ;
-                """
+            select 
+            event_type,                    
+            object_type,
+            event_name,
+            cast(date_parse(cast(year as varchar) || '-' ||
+            cast(month as varchar) || '-' || cast(day as varchar),
+            '%Y-%c-%e') as date) event_date,
+            count(*) amount_events
+        from yapocl_databox.insights_events_behavioral_fact_layer_365d
+        where cast(date_parse(cast(year as varchar) || '-' ||
+            cast(month as varchar) || '-' || cast(day as varchar),
+            '%Y-%c-%e') as date) = date '""" + date_from + """'
+        group by 1,2,3,4
+        order by 1,2,3,4
+        """
         return query
 
     def delete_events(self, date_from, date_to):
@@ -25,7 +29,7 @@ class Query:
         """
         command = """
                   delete from dm_pulse.monitoring_events
-                  where event_date::date between
+                  where event_date::date =
                   '""" + date_from + """'::date
-                  and '""" + date_to + """'::date """
+                  """
         return command
