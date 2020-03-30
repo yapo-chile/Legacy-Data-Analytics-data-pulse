@@ -140,7 +140,8 @@ class Database:
         with self.connection.cursor() as cursor:
             psycopg2.extras \
                 .execute_values(cursor,
-                                """ INSERT INTO """ + self.conf.table_temp_hist +
+                                """ INSERT INTO """ + \
+                                self.conf.table_temp_hist +
                                 """ ( ad_id,
                                       list_id,
                                       list_time,

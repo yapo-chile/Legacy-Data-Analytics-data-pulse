@@ -213,7 +213,7 @@ class Query:
                 tmp_ads_monthly c
         """
         return queryBlocket
-    
+
     def get_enrich_partner_ads_daily(self) -> str:
         """
         Method return str with query to load a historichal
@@ -417,7 +417,8 @@ class Query:
         command = """
                     delete from dm_analysis.temp_hist_partner_ads where 
                     list_time::date = 
-                    '""" + self.params.get_date_from() + """'::date + interval '-7 month' """
+                    '""" + self.params.get_date_from() \
+                         + """'::date + interval '-7 month' """
 
         return command
 

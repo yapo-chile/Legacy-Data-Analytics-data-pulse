@@ -42,10 +42,11 @@ def source_data_blocket(params: ReadParams,
 
 # Query data from blocket DB
 def source_data_blocket_hist_partner_ads_monthly(params: ReadParams,
-                                         config: getConf):
+                                                 config: getConf):
     query = Query(config, params)
     db_source = Database(conf=config.blocketConf)
-    data_blocket = db_source.select_to_dict(query.get_enrich_partner_ads_monthly())
+    data_blocket = db_source.select_to_dict(query. \
+        get_enrich_partner_ads_monthly())
     db_source.close_connection()
     return data_blocket
 
@@ -53,7 +54,7 @@ def source_data_blocket_hist_partner_ads_monthly(params: ReadParams,
 def write_data_dwh_enrich_partner_ads_monthly(params: ReadParams,
                                               config: getConf,
                                               data_dwh: pd.DataFrame) -> None:
-    query = Query(config, params)
+#   query = Query(config, params)
     DB_WRITE = Database(conf=config.DWConf)
     DB_WRITE.insert_data_enrich_partner_ads(data_dwh)
     DB_WRITE.close_connection()
@@ -63,7 +64,8 @@ def source_data_blocket_hist_partner_ads_daily(params: ReadParams,
                                                config: getConf):
     query = Query(config, params)
     db_source = Database(conf=config.blocketConf)
-    data_blocket = db_source.select_to_dict(query.get_enrich_partner_ads_daily())
+    data_blocket = db_source.select_to_dict(query. \
+        get_enrich_partner_ads_daily())
     db_source.close_connection()
     return data_blocket
 
@@ -73,7 +75,8 @@ def write_data_dwh_enrich_partner_ads_daily(params: ReadParams,
                                             data_dwh: pd.DataFrame) -> None:
     query = Query(config, params)
     DB_WRITE = Database(conf=config.DWConf)
-    DB_WRITE.execute_command(query.delete_base_temp_hist_partner_ads_current_day())
+    DB_WRITE.execute_command(query. \
+        delete_base_temp_hist_partner_ads_current_day())
     DB_WRITE.insert_data_enrich_partner_ads(data_dwh)
     DB_WRITE.execute_command(query.delete_base_temp_hist_partner_ads_last_day())
     DB_WRITE.close_connection()
@@ -89,7 +92,7 @@ def source_data_pulse_partners_leads(params: ReadParams,
 
 # Query data from data warehouse
 def source_data_dwh_partner_ads(params: ReadParams,
-                                    config: getConf):
+                                config: getConf):
     query = Query(config, params)
     db_source = Database(conf=config.DWConf)
     data_dwh = db_source.select_to_dict(query.get_partner_ads())
@@ -152,16 +155,20 @@ if __name__ == '__main__':
     print("HORA INICIO:")
     print(datetime.now().strftime('%H:%M:%S'))
  ## History ads monthly extractor
- #   DATA_HIST_PARTNERS_ADS = source_data_blocket_hist_partner_ads_monthly(PARAMS, CONFIG)
+ #   DATA_HIST_PARTNERS_ADS = \
+ #   source_data_blocket_hist_partner_ads_monthly(PARAMS, CONFIG)
  #   print("Lista extraccion: DATA_HIST_PARTNERS_ADS")
  #   print(DATA_HIST_PARTNERS_ADS.head(20))
- #   write_data_dwh_enrich_partner_ads_monthly(PARAMS, CONFIG, DATA_HIST_PARTNERS_ADS)
+ #   write_data_dwh_enrich_partner_ads_monthly(PARAMS, CONFIG,
+ #                                             DATA_HIST_PARTNERS_ADS)
  #   print("Lista persistencia tabla hist: dm_analysis.temp_hist_partner_ads")
  ## History ads daily extractor
-    DATA_HIST_PARTNERS_ADS = source_data_blocket_hist_partner_ads_daily(PARAMS, CONFIG)
+    DATA_HIST_PARTNERS_ADS = \
+        source_data_blocket_hist_partner_ads_daily(PARAMS, CONFIG)
     print("Lista extraccion: DATA_HIST_PARTNERS_ADS")
     print(DATA_HIST_PARTNERS_ADS.head(20))
-    write_data_dwh_enrich_partner_ads_daily(PARAMS, CONFIG, DATA_HIST_PARTNERS_ADS)
+    write_data_dwh_enrich_partner_ads_daily(PARAMS,
+                                            CONFIG, DATA_HIST_PARTNERS_ADS)
     print("Lista persistencia tabla hist: dm_analysis.temp_hist_partner_ads")
  ## Massive Load Process extactors
     DATA_PARTNERS_LEADS = source_data_pulse_partners_leads(PARAMS, CONFIG)
@@ -179,8 +186,8 @@ if __name__ == '__main__':
     DATA_CAR_PARAMS = source_data_dwh_car_params(PARAMS, CONFIG)
     print("Lista extraccion: DATA_CAR_PARAMS")
     print(DATA_CAR_PARAMS.head(20))
-    
-    
+
+
  ###################################################
  #                   TRANSFORM                     #
  ###################################################
@@ -194,7 +201,7 @@ if __name__ == '__main__':
         "list_id"].astype(int)
     print("TRANSFORM: DATA_PARTNERS_LEADS")
     print(DATA_PARTNERS_LEADS.head(20))
-    
+
 # Setting index to dataframes
     DATA_PARTNERS_ADS.set_index('ad_id', inplace=True)
     DATA_PARTNERS_ADS = DATA_PARTNERS_ADS.reset_index()
@@ -204,7 +211,7 @@ if __name__ == '__main__':
         "comuna", "price", "sucursal", "user_id", "email"]]
     print("TRANSFORM: DATA_PARTNERS_ADS")
     print(DATA_PARTNERS_ADS.head(20))
-    
+
 # Adding param info to ads
     DATA_INMO_PARAMS[["rooms", "squared_meters", "estate_type"]] = \
     DATA_INMO_PARAMS[["rooms", "squared_meters", "estate_type"]]. \
@@ -217,19 +224,19 @@ if __name__ == '__main__':
         fillna(0).astype(int)
     print("TRANSFORM: DATA_CAR_PARAMS")
     print(DATA_CAR_PARAMS.head(20))
-    
+
     PARTNERS_WITH_BASIC_PARAMS = pd.merge(
         DATA_PARTNERS_ADS,
         DATA_INMO_PARAMS,
         how="left", on=["ad_id"])
     print("TRANSFORM: PARTNERS_WITH_BASIC_PARAMS")
     print(PARTNERS_WITH_BASIC_PARAMS.head(20))
-    
+
     PARTNERS_WITH_ALL_PARAMS = pd.merge(
         PARTNERS_WITH_BASIC_PARAMS,
         DATA_CAR_PARAMS,
         how="left", on=["ad_id"])
-    
+
     PARTNERS_WITH_ALL_PARAMS[["region", "comuna", "rooms",
                               "squared_meters", "estate_type",
                               "car_year", "brand", "model",
@@ -248,7 +255,7 @@ if __name__ == '__main__':
                               "km", "price"]].astype(int)
     print("TRANSFORM: PARTNERS_WITH_ALL_PARAMS")
     print(PARTNERS_WITH_ALL_PARAMS.head(20))
-    
+
 # Mapping values for params
     PATH_PICKLES = source_data_pickles(CONFIG)
 
@@ -287,7 +294,7 @@ if __name__ == '__main__':
         "brand"].map(brand_map)
     print("TRANSFORM: PARTNERS_WITH_ALL_PARAMS_WITH_PICKLES")
     print(PARTNERS_WITH_ALL_PARAMS.head(20))
-    
+
 # Merging ads with activity from Pulse
     DATA_PARTNERS = pd.merge(
         PARTNERS_WITH_ALL_PARAMS,
