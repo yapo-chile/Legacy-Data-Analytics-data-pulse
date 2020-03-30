@@ -16,5 +16,3 @@ services:
       - ./secrets/dw/secrets_DW:/app/dw-secret
       - ./secrets/pulse/secrets_pulse:/app/pulse-secret
       - ./pickles:/app/pickles
-
-
