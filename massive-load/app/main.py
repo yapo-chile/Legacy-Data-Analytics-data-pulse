@@ -147,45 +147,26 @@ if __name__ == '__main__':
  ###################################################
 
  #   DATA_DWH = source_data_dwh(PARAMS, CONFIG)
- #   print(DATA_DWH.head(20))
  #   DATA_BLOCKET = source_data_blocket(PARAMS, CONFIG)
- #   print(DATA_BLOCKET.head(20))
  #   DATA_ATHENA = source_data_pulse(PARAMS, CONFIG)
- #   print(DATA_ATHENA.head(20))
-    print("HORA INICIO:")
-    print(datetime.now().strftime('%H:%M:%S'))
  ## History ads monthly extractor
  #   DATA_HIST_PARTNERS_ADS = \
  #   source_data_blocket_hist_partner_ads_monthly(PARAMS, CONFIG)
- #   print("Lista extraccion: DATA_HIST_PARTNERS_ADS")
- #   print(DATA_HIST_PARTNERS_ADS.head(20))
  #   write_data_dwh_enrich_partner_ads_monthly(PARAMS, CONFIG,
  #                                             DATA_HIST_PARTNERS_ADS)
- #   print("Lista persistencia tabla hist: dm_analysis.temp_hist_partner_ads")
  ## History ads daily extractor
     DATA_HIST_PARTNERS_ADS = \
         source_data_blocket_hist_partner_ads_daily(PARAMS, CONFIG)
-    print("Lista extraccion: DATA_HIST_PARTNERS_ADS")
-    print(DATA_HIST_PARTNERS_ADS.head(20))
     write_data_dwh_enrich_partner_ads_daily(PARAMS,
                                             CONFIG, DATA_HIST_PARTNERS_ADS)
-    print("Lista persistencia tabla hist: dm_analysis.temp_hist_partner_ads")
  ## Massive Load Process extactors
     DATA_PARTNERS_LEADS = source_data_pulse_partners_leads(PARAMS, CONFIG)
-    print("Lista extraccion: DATA_PARTNERS_LEADS")
-    print(DATA_PARTNERS_LEADS.head(20))
 
     DATA_PARTNERS_ADS = source_data_dwh_partner_ads(PARAMS, CONFIG)
-    print("Lista extraccion: DATA_PARTNERS_ADS")
-    print(DATA_PARTNERS_ADS.head(20))
 
     DATA_INMO_PARAMS = source_data_dwh_inmo_params(PARAMS, CONFIG)
-    print("Lista extraccion: DATA_INMO_PARAMS")
-    print(DATA_INMO_PARAMS.head(20))
 
     DATA_CAR_PARAMS = source_data_dwh_car_params(PARAMS, CONFIG)
-    print("Lista extraccion: DATA_CAR_PARAMS")
-    print(DATA_CAR_PARAMS.head(20))
 
 
  ###################################################
@@ -199,8 +180,6 @@ if __name__ == '__main__':
         DATA_PARTNERS_LEADS["list_id"].str.isnumeric()]
     DATA_PARTNERS_LEADS["list_id"] = DATA_PARTNERS_LEADS[
         "list_id"].astype(int)
-    print("TRANSFORM: DATA_PARTNERS_LEADS")
-    print(DATA_PARTNERS_LEADS.head(20))
 
 # Setting index to dataframes
     DATA_PARTNERS_ADS.set_index('ad_id', inplace=True)
@@ -209,28 +188,20 @@ if __name__ == '__main__':
         "list_id", "ad_id", "list_time", "deletion_date", "vertical",
         "category", "integrador", "codigo_inmo", "patente", "region",
         "comuna", "price", "sucursal", "user_id", "email"]]
-    print("TRANSFORM: DATA_PARTNERS_ADS")
-    print(DATA_PARTNERS_ADS.head(20))
 
 # Adding param info to ads
     DATA_INMO_PARAMS[["rooms", "squared_meters", "estate_type"]] = \
     DATA_INMO_PARAMS[["rooms", "squared_meters", "estate_type"]]. \
         fillna(0).astype(int)
-    print("TRANSFORM: DATA_INMO_PARAMS")
-    print(DATA_INMO_PARAMS.head(20))
 
     DATA_CAR_PARAMS[["car_year", "brand", "model", "km"]] = \
     DATA_CAR_PARAMS[["car_year", "brand", "model", "km"]]. \
         fillna(0).astype(int)
-    print("TRANSFORM: DATA_CAR_PARAMS")
-    print(DATA_CAR_PARAMS.head(20))
 
     PARTNERS_WITH_BASIC_PARAMS = pd.merge(
         DATA_PARTNERS_ADS,
         DATA_INMO_PARAMS,
         how="left", on=["ad_id"])
-    print("TRANSFORM: PARTNERS_WITH_BASIC_PARAMS")
-    print(PARTNERS_WITH_BASIC_PARAMS.head(20))
 
     PARTNERS_WITH_ALL_PARAMS = pd.merge(
         PARTNERS_WITH_BASIC_PARAMS,
@@ -253,8 +224,6 @@ if __name__ == '__main__':
                               "squared_meters", "estate_type",
                               "car_year", "brand", "model",
                               "km", "price"]].astype(int)
-    print("TRANSFORM: PARTNERS_WITH_ALL_PARAMS")
-    print(PARTNERS_WITH_ALL_PARAMS.head(20))
 
 # Mapping values for params
     PATH_PICKLES = source_data_pickles(CONFIG)
@@ -292,8 +261,6 @@ if __name__ == '__main__':
         "index_tuple"].map(model_map)
     PARTNERS_WITH_ALL_PARAMS["brand"] = PARTNERS_WITH_ALL_PARAMS[
         "brand"].map(brand_map)
-    print("TRANSFORM: PARTNERS_WITH_ALL_PARAMS_WITH_PICKLES")
-    print(PARTNERS_WITH_ALL_PARAMS.head(20))
 
 # Merging ads with activity from Pulse
     DATA_PARTNERS = pd.merge(
@@ -302,9 +269,6 @@ if __name__ == '__main__':
         how="left", on=["list_id"])
     DATA_PARTNERS["deletion_date"] = DATA_PARTNERS["deletion_date"]. \
         fillna(date(2199, 12, 31)).astype(str)
-    print("TRANSFORM: DATA_PARTNERS")
-    print(DATA_PARTNERS.head(20))
-
 
 # Filtering for active ads in the period
     DATA_PARTNERS_ACTIVE = DATA_PARTNERS[DATA_PARTNERS["list_time"]. \
@@ -320,16 +284,9 @@ if __name__ == '__main__':
          "number_of_views", "number_of_show_phone", "number_of_calls",
          "number_of_ad_replies"
          ]]
-    print("TRANSFORM: DATA_PARTNERS_ACTIVE")
-    print(DATA_PARTNERS_ACTIVE.head(20))
-    print("HORA FIN:")
-    print(datetime.now().strftime('%H:%M:%S'))
- #  exit()
  ###################################################
  #                     LOAD                        #
  ###################################################
-    print("LOAD: Persistencia en dm_analysis.test_partners_leads")
     write_data_dwh(PARAMS, CONFIG, DATA_PARTNERS_ACTIVE)
     TIME.get_time()
-    print("Process ended successfully.")
     LOGGER.info('Process ended successfully.')
