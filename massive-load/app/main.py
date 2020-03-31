@@ -3,6 +3,7 @@
 import sys
 import logging
 import pickle
+from datetime import date
 import pandas as pd
 from infraestructure.athena import Athena
 from infraestructure.conf import getConf
