@@ -30,6 +30,290 @@ class Query:
         """
         return query
 
+    def get_enrich_partner_ads_monthly(self) -> str:
+        """
+        Method return str with query to load a historichal
+        table with 7 months of history ads
+        """
+        queryBlocket = """
+        with tmp_users as (
+            select distinct
+	            user_id,
+	            email
+            from
+	            public.users), tmp_ads_params as (
+            select distinct
+	            a.ad_id,
+                max(a.patente) patente,
+                max(a.codigo_inmo) codigo_inmo,
+                max(a.communes) comuna,
+                max(a.integrador) integrador
+            from 
+                (select distinct
+                ad_id,
+                case when name = 'plates' then value
+                end patente,
+                case when name = 'ext_code' then value
+                end codigo_inmo,
+                case when name = 'communes' then value
+                end communes,
+                case when name = 'link_type' then value
+                end integrador
+            from
+                blocket_2019.ad_params
+            where
+                name in ('plates','ext_code','communes','link_type')
+            union all
+            select distinct
+                ad_id,
+                case when name = 'plates' then value
+                end patente,
+                case when name = 'ext_code' then value
+                end codigo_inmo,
+                case when name = 'communes' then value
+                end communes,
+                case when name = 'link_type' then value
+                end integrador
+            from
+                blocket_2020.ad_params
+            where
+                name in ('plates','ext_code','communes','link_type')
+            union all
+            select distinct
+	            ad_id,
+                case when name = 'plates' then value
+                end patente,
+                case when name = 'ext_code' then value
+                end codigo_inmo,
+                case when name = 'communes' then value
+                end communes,
+                case when name = 'link_type' then value
+                end integrador
+            from
+                public.ad_params
+            where
+                name in ('plates','ext_code','communes','link_type')) a
+            group by 1), tmp_ads_monthly as (
+            select distinct 
+	            c.ad_id,
+                c.list_id,
+                c.list_time::date,
+                c.vertical,
+                c.category,
+                c.region,
+                c.price,
+                c.name,
+                c.user_id,
+                c.email,
+                c.modified_at::date,
+                c.status,
+                c.patente,
+                c.codigo_inmo,
+                c.comuna,
+                c.integrador
+            from
+	            (select distinct 
+		            a.ad_id,
+    	            a.list_id,
+    	            a.list_time,
+                    case when a.category in (2020,2040,2060,2080,2100,2120) then 'Motor'
+                        when a.category in (1220,1240,1260) then 'Real Estate'
+                    end vertical,
+    	            a.category,
+    	            a.region,
+    	            a.price,
+    	            a.name,
+    	            a.user_id,
+    	            u.email,
+    	            a.modified_at,
+    	            a.status,
+    	            p.patente,
+    	            p.codigo_inmo,
+    	            p.comuna,
+    	            p.integrador
+	            from
+                    blocket_2019.ads a
+                    left join tmp_users u on (u.user_id = a.user_id)
+                    left join tmp_ads_params p on (p.ad_id = a.ad_id)
+	            where
+                    a.category in (2020,2040,2060,2080,2100,2120,1220,1240,1260)
+                    and a.list_time::date between date '2020-01-01' and date '2020-01-31'
+                union all
+                select distinct 
+                    a.ad_id,
+                    a.list_id,
+                    a.list_time,
+                    case when a.category in (2020,2040,2060,2080,2100,2120) then 'Motor'
+                         when a.category in (1220,1240,1260) then 'Real Estate'
+                    end vertical,
+                    a.category,
+                    a.region,
+                    a.price,
+                    a.name,
+                    a.user_id,
+                    u.email,
+                    a.modified_at,
+                    a.status,
+    	            p.patente,
+    	            p.codigo_inmo,
+    	            p.comuna,
+    	            p.integrador
+                from
+                    blocket_2020.ads a
+                    left join tmp_users u on (u.user_id = a.user_id)
+                    left join tmp_ads_params p on (p.ad_id = a.ad_id)
+                where
+                    a.category in (2020,2040,2060,2080,2100,2120,1220,1240,1260)
+                    and a.list_time::date between date '2020-01-01' and date '2020-01-31'
+                union all
+                select distinct 
+                    a.ad_id,
+                    a.list_id,
+                    a.list_time,
+                    case when a.category in (2020,2040,2060,2080,2100,2120) then 'Motor'
+                         when a.category in (1220,1240,1260) then 'Real Estate'
+                    end vertical,
+                    a.category,
+                    a.region,
+                    a.price,
+                    a.name,
+                    a.user_id,
+                    u.email,
+                    a.modified_at,
+                    a.status,
+    	            p.patente,
+    	            p.codigo_inmo,
+    	            p.comuna,
+    	            p.integrador
+                from
+                    public.ads a
+                    left join tmp_users u on (u.user_id = a.user_id)
+                    left join tmp_ads_params p on (p.ad_id = a.ad_id)
+                where
+                    a.category in (2020,2040,2060,2080,2100,2120,1220,1240,1260)
+                    and a.list_time::date between date '2020-01-01' and date '2020-01-31') c)
+            select
+                c.ad_id,
+                c.list_id::text,
+                c.list_time,
+                c.vertical,
+                c.category,
+                c.region,
+                c.price::text,
+                c.name,
+                c.user_id,
+                c.email,
+                c.modified_at,
+                c.status,
+                c.patente,
+                c.codigo_inmo,
+                c.comuna,
+                c.integrador
+            from 
+                tmp_ads_monthly c
+        """
+        return queryBlocket
+
+    def get_enrich_partner_ads_daily(self) -> str:
+        """
+        Method return str with query to load a historichal
+        table with 7 months (windowed) of history ads
+        """
+        queryBlocket = """
+        with tmp_users as (
+            select distinct
+	            user_id,
+	            email
+            from
+	            public.users), tmp_ads_params as (
+            select distinct
+	            a.ad_id,
+                max(a.patente) patente,
+                max(a.codigo_inmo) codigo_inmo,
+                max(a.communes) comuna,
+                max(a.integrador) integrador
+            from 
+                (select distinct
+	            ad_id,
+                case when name = 'plates' then value
+                end patente,
+                case when name = 'ext_code' then value
+                end codigo_inmo,
+                case when name = 'communes' then value
+                end communes,
+                case when name = 'link_type' then value
+                end integrador
+            from
+                public.ad_params
+            where
+                name in ('plates','ext_code','communes','link_type')) a
+            group by 1), tmp_ads_monthly as (
+            select distinct 
+	            c.ad_id,
+                c.list_id,
+                c.list_time::date,
+                c.vertical,
+                c.category,
+                c.region,
+                c.price,
+                c.name,
+                c.user_id,
+                c.email,
+                c.modified_at::date,
+                c.status,
+                c.patente,
+                c.codigo_inmo,
+                c.comuna,
+                c.integrador
+            from
+	            (select distinct 
+                    a.ad_id,
+                    a.list_id,
+                    a.list_time,
+                    case when a.category in (2020,2040,2060,2080,2100,2120) then 'Motor'
+                         when a.category in (1220,1240,1260) then 'Real Estate'
+                    end vertical,
+                    a.category,
+                    a.region,
+                    a.price,
+                    a.name,
+                    a.user_id,
+                    u.email,
+                    a.modified_at,
+                    a.status,
+    	            p.patente,
+    	            p.codigo_inmo,
+    	            p.comuna,
+    	            p.integrador
+                from
+                    public.ads a
+                    left join tmp_users u on (u.user_id = a.user_id)
+                    left join tmp_ads_params p on (p.ad_id = a.ad_id)
+                where
+                    a.category in (2020,2040,2060,2080,2100,2120,1220,1240,1260)
+                    and a.list_time::date = date '{0}') c)
+            select
+                c.ad_id,
+                c.list_id,
+                c.list_time,
+                c.vertical,
+                c.category,
+                c.region,
+                c.price::text,
+                c.name,
+                c.user_id,
+                c.email,
+                c.modified_at,
+                c.status,
+                c.patente,
+                c.codigo_inmo,
+                c.comuna,
+                c.integrador
+            from 
+                tmp_ads_monthly c
+        """.format(self.params.get_date_from())
+        return queryBlocket
+
     def get_pulse_partners_leads(self) -> str:
         """
         Method return str with query
@@ -58,222 +342,28 @@ class Query:
         """
         Method return str with query
         """
-        queryBlocket = """
-        select distinct
-            d.ad_id,
-            d.value as integrador
-        from
-            (--d
-            select distinct
-                ad_id,
-                value
-            from
-                blocket_{0}.ad_params
-            where
-                name = 'link_type'
-            union all
-            select distinct
-                ad_id,
-                value
-            from
-                blocket_{1}.ad_params
-            where
-                name = 'link_type'
-            union all
-            select distinct
-                ad_id,
-                value
-            from
-                public.ad_params
-            where
-                name = 'link_type'
-            ) d
-        """.format(self.params.get_last_year(), self.params.get_current_year())
-        return queryBlocket
-
-    def get_partner_ads_params(self) -> str:
-        """
-        Method return str with query
-        """
-        queryBlocket = """
-        select distinct
-            a.ad_id,
-            max(a.patente) patente,
-            max(a.codigo_inmo) codigo_inmo,
-            max(a.communes) comuna
-        from 
-            (--a
-            select distinct
-                ad_id,
-                case when name = 'plates' then value
-                end patente,
-                case when name = 'ext_code' then value
-                end codigo_inmo,
-                case when name = 'communes' then value
-                end communes
-            from
-                blocket_{0}.ad_params
-            where
-                name in ('plates','ext_code','communes')
-            union all
-            select distinct
-                ad_id,
-                case when name = 'plates' then value
-                end patente,
-                case when name = 'ext_code' then value
-                end codigo_inmo,
-                case when name = 'communes' then value
-                end communes
-            from
-                blocket_{1}.ad_params
-            where
-                name in ('plates','ext_code','communes')
-            union all
-            select distinct
-                ad_id,
-                case when name = 'plates' then value
-                end patente,
-                case when name = 'ext_code' then value
-                end codigo_inmo,
-                case when name = 'communes' then value
-                end communes
-            from
-                public.ad_params
-            where
-                name in ('plates','ext_code','communes')
-            ) a
-        group by 1
-        """.format(self.params.get_last_year(), self.params.get_current_year())
-        return queryBlocket
-
-    def get_partner_ad_info(self) -> str:
-        """
-        Method return str with query
-        """
-        queryBlocket = """
-        select distinct 
-            c.ad_id,
-            c.list_id,
-            c.list_time::date,
-            case when c.category in (2020,2040,2060,2080,2100,2120) then 'Motor'
-                 when c.category in (1220,1240,1260) then 'Real Estate'
-            end vertical,
-            c.category,
-            c.region,
-            c.price,
-            c.name sucursal,
-            c.user_id
-        from
-            (
-            select distinct 
-                ad_id,
-                list_id,
-                list_time,
-                category,
-                region,
-                price,
-                name,
-                user_id
-            from
-                blocket_{2}.ads
-            where
-                category in (2020,2040,2060,2080,2100,2120,1220,1240,1260)
-                and list_time::date between date '{0}' + interval '-7 month' and date '{1}'
-            union all
-            select distinct 
-                ad_id,
-                list_id,
-                list_time,
-                category,
-                region,
-                price,
-                name,
-                user_id
-            from
-                blocket_{3}.ads
-            where
-                category in (2020,2040,2060,2080,2100,2120,1220,1240,1260)
-                and list_time::date between date '{0}' + interval '-7 month' and date '{1}'
-            union all
-            select distinct 
-                ad_id,
-                list_id,
-                list_time,
-                category,
-                region,
-                price,
-                name,
-                user_id
-            from
-                public.ads
-            where
-                category in (2020,2040,2060,2080,2100,2120,1220,1240,1260)
-                and list_time::date between date '{0}' + interval '-7 month' and date '{1}'
-            ) c
-        """.format(self.params.get_date_from(),
-                   self.params.get_date_to(),
-                   self.params.get_last_year(),
-                   self.params.get_current_year())
-        return queryBlocket
-
-    def get_partner_ad_deletion_date(self) -> str:
-        """
-        Method return str with query
-        """
-        queryBlocket = """
+        queryDW = """
         select distinct
             ad_id,
-            deletion_date::date
-        from
-            (--a
-            select distinct
-                ad_id,
-                modified_at deletion_date
-            from
-                blocket_{2}.ads
-            where
-                category in (2020,2040,2060,2080,2100,2120,1220,1240,1260)
-                and list_time::date between date '{0}' + interval '-7 month' and date '{1}'
-                and status = 'deleted'
-            union all 
-            select distinct
-                ad_id,
-                modified_at deletion_date
-            from
-                blocket_{3}.ads
-            where
-                category in (2020,2040,2060,2080,2100,2120,1220,1240,1260)
-                and list_time::date between date '{0}' + interval '-7 month' and date '{1}'
-                and status = 'deleted'
-            union all 
-            select distinct
-                ad_id,
-                modified_at deletion_date
-            from
-                public.ads
-            where
-                category in (2020,2040,2060,2080,2100,2120,1220,1240,1260)
-                and list_time::date between date '{0}' + interval '-7 month' and date '{1}'
-                and status = 'deleted'
-            ) a
-        """.format(self.params.get_date_from(),
-                   self.params.get_date_to(),
-                   self.params.get_last_year(),
-                   self.params.get_current_year())
-        return queryBlocket
-
-    def get_partner_users(self) -> str:
-        """
-        Method return str with query
-        """
-        queryBlocket = """
-        select distinct
+            list_id,
+            list_time,
+            vertical,
+            category,
+            region,
+            price,
+            name as sucursal,
             user_id,
-            email
-        from
-            public.users
+            email,
+            case when status = 'deleted' then modified_at
+                 else null
+            end deletion_date,
+            patente,
+            codigo_inmo,
+            comuna,
+            integrador
+        from dm_analysis.temp_hist_partner_ads
         """
-        return queryBlocket
+        return queryDW
 
     def ad_inmo_params(self) -> str:
         """
@@ -281,13 +371,14 @@ class Query:
         """
         queryDW = """
         select distinct
-            ad_id_nk ad_id,
+            ad_id_nk as ad_id,
             rooms::int,
             meters::int squared_meters,
             estate_type::int,
             currency
         from
-            ods.ads_inmo_params
+            ods.ads_inmo_params ip
+            inner join dm_analysis.temp_hist_partner_ads pa on (pa.ad_id = ip.ad_id_nk)
         """
         return queryDW
 
@@ -297,15 +388,39 @@ class Query:
         """
         queryDW = """
         select distinct
-            ad_id_nk ad_id,
+            ad_id_nk as ad_id,
             car_year::int,
             brand::int,
             model::int,
             mileage::int km
         from
-            ods.ads_cars_params
+            ods.ads_cars_params cp
+            inner join dm_analysis.temp_hist_partner_ads pa on (pa.ad_id = cp.ad_id_nk)
         """
         return queryDW
+
+    def delete_base_temp_hist_partner_ads_current_day(self) -> str:
+        """
+        Method that delete temp table
+        """
+        command = """
+                    delete from dm_analysis.temp_hist_partner_ads where 
+                    list_time::date = 
+                    '""" + self.params.get_date_from() + """'::date """
+
+        return command
+
+    def delete_base_temp_hist_partner_ads_last_day(self) -> str:
+        """
+        Method that delete temp table
+        """
+        command = """
+                    delete from dm_analysis.temp_hist_partner_ads where 
+                    list_time::date = 
+                    '""" + self.params.get_date_from() \
+                         + """'::date + interval '-7 month' """
+
+        return command
 
     def delete_base(self) -> str:
         """
