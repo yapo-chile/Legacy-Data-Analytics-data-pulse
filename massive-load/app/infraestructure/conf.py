@@ -52,7 +52,6 @@ class AppConfig:
         user: str = INI_DW.secret(name="user", default=environ.var())
         password: str = INI_DW.secret(name="password", default=environ.var())
         table: str = environ.var("dm_analysis.test_partners_leads")
-        table_temp_hist: str = environ.var("dm_analysis.temp_hist_partner_ads")
 
     @environ.config(prefix="PICKLES")
     class PicklesConfig:
@@ -65,7 +64,6 @@ class AppConfig:
     blocketConf = environ.group(DB_BlocketConfig)
     DWConf = environ.group(DB_DWConfig)
     PicklesConf = environ.group(PicklesConfig)
-
 
 def getConf():
     return environ.to_config(AppConfig)
