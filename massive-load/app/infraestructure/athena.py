@@ -33,8 +33,8 @@ class Athena:
         """
         Method that returns pandas DataFrame from query to S3 Bucket
         """
-        self.log.info('Run query : %s',
-                      query.replace('\n', ' ').replace('\t', ' '))
+        #self.log.info('Run query : %s',
+        #              query.replace('\n', ' ').replace('\t', ' '))
         df_result = pd.io.sql.read_sql(query, self.connection)
         return df_result
 
