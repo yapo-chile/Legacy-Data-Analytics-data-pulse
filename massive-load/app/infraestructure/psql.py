@@ -51,8 +51,6 @@ class Database:
         """
         Method that from query transform raw data into dict.
         """
-        #self.log.info('Query : %s', query.replace(
-        #    '\n', ' ').replace('    ', ' '))
         cursor = self.connection.cursor()
         cursor.execute(query)
         fieldnames = [name[0] for name in cursor.description]
