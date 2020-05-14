@@ -51,8 +51,6 @@ class Database:
         """
         Method that from query transform raw data into dict.
         """
-        self.log.info('Query : %s', query.replace(
-            '\n', ' ').replace('    ', ' '))
         cursor = self.connection.cursor()
         cursor.execute(query)
         fieldnames = [name[0] for name in cursor.description]
@@ -132,55 +130,6 @@ class Database:
             self.log.info('INSERT %s COMMIT.', self.conf.table)
             self.connection.commit()
             self.log.info('CLOSE CURSOR %s', self.conf.table)
-            cursor.close()
-
-    def insert_data_enrich_partner_ads(self, data_dict: pd.DataFrame) -> None:
-        self.log.info('INSERT INTO %s', self.conf.table_temp_hist)
-        page_size: int = 10000
-        with self.connection.cursor() as cursor:
-            psycopg2.extras \
-                .execute_values(cursor,
-                                """ INSERT INTO """ + \
-                                self.conf.table_temp_hist +
-                                """ ( ad_id,
-                                      list_id,
-                                      list_time,
-                                      vertical,
-                                      category,
-                                      region,
-                                      price,
-                                      name,
-                                      user_id,
-                                      email,
-                                      modified_at,
-                                      status,
-                                      patente,
-                                      codigo_inmo,
-                                      comuna,
-                                      integrador
-                                    )
-                                    VALUES %s; """, ((
-                                        row.ad_id,
-                                        row.list_id,
-                                        row.list_time,
-                                        row.vertical,
-                                        row.category,
-                                        row.region,
-                                        row.price,
-                                        row.name,
-                                        row.user_id,
-                                        row.email,
-                                        row.modified_at,
-                                        row.status,
-                                        row.patente,
-                                        row.codigo_inmo,
-                                        row.comuna,
-                                        row.integrador
-                                    ) for row in data_dict.itertuples()),
-                                page_size=page_size)
-            self.log.info('INSERT %s COMMIT.', self.conf.table_temp_hist)
-            self.connection.commit()
-            self.log.info('CLOSE CURSOR %s', self.conf.table_temp_hist)
             cursor.close()
 
 
