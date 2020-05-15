@@ -401,7 +401,7 @@ class Query:
         Method that returns events of the day
         """
         command = """
-                    delete from dm_analysis.test_partners_leads where 
+                    delete from ods.partners_leads where 
                     timedate::date = 
                     '""" + self.params.get_date_from() + """'::date """
 
