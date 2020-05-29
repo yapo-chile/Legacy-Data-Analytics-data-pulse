@@ -19,7 +19,7 @@
       threadcount: '1'
     filter: 'name: dockerhost'
   nodesSelectedByDefault: true
-    notification:
+  notification:
     onfailure:
       email:
         recipients: data_team@adevinta.com
