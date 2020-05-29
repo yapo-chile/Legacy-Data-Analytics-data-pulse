@@ -30,6 +30,15 @@
         subject: ${job.execid} ${execution.status} ${job.name} - Fallo por reintento
   notifyAvgDurationThreshold: null
   scheduleEnabled: true
+  schedule:
+    month: '*'
+    time:
+      hour: '07'
+      minute: '30'
+      seconds: '0'
+    weekday:
+      day: '*'
+    year: '*'
   retry:
     retry: 3
     delay: 20m

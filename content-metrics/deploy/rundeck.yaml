@@ -33,7 +33,7 @@
   schedule:
     month: '*'
     time:
-      hour: '06'
+      hour: '09'
       minute: '0'
       seconds: '0'
     weekday:
