@@ -17,6 +17,8 @@ def source_traffic_metrics(params: ReadParams,
     query = Query(config, params)
     data_athena = athena.get_data(query.query_traffic_metrics())
     athena.close_connection()
+    if not data_athena.empty:
+        raise Exception("Data has issues in traffic metrics")
     return data_athena
 
 # Query unique leads from Pulse bucket
@@ -26,6 +28,8 @@ def source_unique_leads(params: ReadParams,
     query = Query(config, params)
     data_athena = athena.get_data(query.query_unique_leads())
     athena.close_connection()
+    if not data_athena.empty:
+        raise Exception("Data has issues in unique lead")
     return data_athena
 
 # Query unique leads from Pulse bucket
@@ -35,6 +39,8 @@ def source_conversion_to_lead(params: ReadParams,
     query = Query(config, params)
     data_athena = athena.get_data(query.query_conversion_to_lead())
     athena.close_connection()
+    if int(data_athena['users_converting_to_lead']) < 10:
+        raise Exception("Data has issues in conversion to lead")
     return data_athena
 
 # Query buyers from data warehouse
@@ -45,6 +51,8 @@ def source_buyers(params: ReadParams,
     data_dwh = db_source.select_to_dict(query \
                                         .query_buyers())
     db_source.close_connection()
+    if data_dwh['dau'].astype("Int64") < 10:
+        raise Exception("Data has issues in buyers")
     return data_dwh
 
 # Query data from data warehouse
@@ -55,6 +63,8 @@ def source_dau_platform(params: ReadParams,
     data_dwh = db_source.select_to_dict(query \
                                         .query_dau_platform())
     db_source.close_connection()
+    if data_dwh['dau_web'].astype("Int64") < 10:
+        raise Exception("Data has issues in dau plataform")
     return data_dwh
 
 # Write data to data warehouse
@@ -85,6 +95,9 @@ def write_aggregations_peak(params: ReadParams,
     DB_WRITE.insert_data_buyer(data_buyer)
     DB_WRITE.insert_data_dau_platform(data_dau_platform)
     DB_WRITE.close_connection()
+
+def check_data_integrity(traffic, unique_leads, conversion):
+    return True
 
 if __name__ == '__main__':
     CONFIG = getConf()
