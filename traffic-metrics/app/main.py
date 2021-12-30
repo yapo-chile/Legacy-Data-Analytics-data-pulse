@@ -51,7 +51,7 @@ def source_buyers(params: ReadParams,
     data_dwh = db_source.select_to_dict(query \
                                         .query_buyers())
     db_source.close_connection()
-    if data_dwh['dau'][0].astype("Int64") < 10:
+    if data_dwh['dau'][0].astype("int64") < 10:
         raise Exception("Data has issues in buyers")
     return data_dwh
 
@@ -63,7 +63,7 @@ def source_dau_platform(params: ReadParams,
     data_dwh = db_source.select_to_dict(query \
                                         .query_dau_platform())
     db_source.close_connection()
-    if data_dwh['dau_web'][0].astype("Int64") < 10:
+    if data_dwh['dau_web'][0].astype("int64") < 10:
         raise Exception("Data has issues in dau plataform")
     return data_dwh
 
