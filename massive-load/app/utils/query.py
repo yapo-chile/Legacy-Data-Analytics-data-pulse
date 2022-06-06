@@ -1,3 +1,4 @@
+from datetime import datetime
 from infraestructure.conf import getConf
 from utils.read_params import ReadParams
 
@@ -44,6 +45,7 @@ class Query:
         Method return str with query
         """
         listIdsStr = "'" + "','".join([str(x) for x in listIds]) + "'"
+        get_date_from = datetime.strptime(self.params.get_date_from, '%Y-%m-%d').strftime('%Y%m%d')
         return f"""
     select 
     * 
@@ -56,7 +58,7 @@ class Query:
           count(case when event_name = 'Ad_reply_submitted' then event_name end) as number_of_ad_replies,
           count(case when event_name = 'Ad_phone_whatsapp_number_contacted' then event_name end) as number_of_call_whatsapp,
           count (event_name) as leads
-    from `yapo-dat-prd.staging.leads_{self.params.get_date_from}`
+    from `yapo-dat-prd.staging.leads_{get_date_from}`
     WHERE
         cast(object_ad_id as string) in ('{listIdsStr}')
     and 
@@ -69,7 +71,7 @@ class Query:
           PARSE_DATE("%Y%m%d", event_date) AS date,
           cast(object_ad_id AS string) as list_id_nk,
           count(case when event_name in ('Ad_detail_viewed', 'Ad detail viewed') then event_name end) as number_of_views
-    from `yapo-dat-prd.staging.ad_views_{self.params.get_date_from}`
+    from `yapo-dat-prd.staging.ad_views_{get_date_from}`
     WHERE 
         cast(object_ad_id as string) in ('{listIdsStr}')
     and 
