@@ -1,0 +1,32 @@
+# One .gitlab-ci.yml file for each project must be present.
+# In order to run the docker-pipeline-template, a Dockerfile symlink must be placed
+# into <repo>/massive-load/Dockerfile (`ln -s ./app/dockerfile ./Dockerfile`).
+
+"docker-push-hash:massive-load":
+  extends: .docker-push-hash
+  only:
+    variables:
+      - '$CI_COMMIT_BRANCH == "master" && ($CI_COMMIT_MESSAGE =~ /massive-load/ || $SUBFOLDER == "massive-load")'
+  variables:
+    CI_COMMIT_SHORT_SHA: "${CI_COMMIT_SHORT_SHA}_massive-load"
+    IMAGE_TAG: "${CI_COMMIT_SHORT_SHA}"
+  before_script:
+    - cd ./massive-load/
+    - sleep 5
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+"deploy-rundeck:massive-load":
+  extends: .deploy-rundeck
+  dependencies:
+    - docker-push-hash:massive-load
+  when: manual
+  only:
+    variables:
+      - '$CI_COMMIT_BRANCH == "master" && ($CI_COMMIT_MESSAGE =~ /massive-load/ || $SUBFOLDER == "massive-load")'
+  variables:
+    IMAGE_TAG: "${CI_COMMIT_SHORT_SHA}_massive-load"
+    RUNDECK_MANIFEST: "deploy/rundeck.yaml"
+    RUNDECK_PROJECT: "data_jobs"
+  before_script:
+    - apk add --no-cache curl gettext
+    - cd ./massive-load/
