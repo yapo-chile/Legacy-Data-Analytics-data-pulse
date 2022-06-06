@@ -5,6 +5,7 @@ import logging
 import pickle
 from datetime import datetime, date
 import pandas as pd
+from google.oauth2 import service_account
 from infraestructure.athena import Athena
 from infraestructure.conf import getConf
 from infraestructure.psql import Database
@@ -46,18 +47,33 @@ def source_data_blocket(params: ReadParams,
     return data_blocket
 
 # Query data from Pulse bucket
-def source_data_pulse_partners_leads(params: ReadParams,
-                                     config: getConf,
-                                     listIds):
-    athena = Athena(conf=config.athenaConf)
+def source_data_gbq_partners_leads(params: ReadParams,
+                                   config: getConf,
+                                   listIds):
+    credentials = service_account.Credentials.from_service_account_info(
+        {
+            "type": config.GBQConf.type,
+            "project_id": config.GBQConf.project_id,
+            "private_key_id": config.GBQConf.private_key_id,
+            "private_key": config.GBQConf.private_key.replace('\\n', '\n'),
+            "client_email": config.GBQConf.client_email,
+            "client_id": config.GBQConf.client_id,
+            "auth_uri": config.GBQConf.auth_uri,
+            "token_uri": config.GBQConf.token_uri,
+            "auth_provider_x509_cert_url": config.GBQConf.auth_provider_x509_cert_url,
+            "client_x509_cert_url": config.GBQConf.client_x509_cert_url
+        }
+    )
+
     query = Query(config, params)
-    data_athena = pd.DataFrame()
-    listIdsChunks = list(chunks(listIds, 10000))
-    for chunk in listIdsChunks:
-        df = athena.get_data(query.get_pulse_partners_leads(chunk))
-        data_athena = data_athena.append(df, ignore_index=True)
-    athena.close_connection()
-    return data_athena
+    LOGGER.info('QUERY GBQ PARTNERS LEAD:')
+    LOGGER.info(query.get_gbq_partners_leads(listIds))
+    data = pd.read_gbq(query.get_gbq_partners_leads(listIds),
+                       project_id=config.GBQConf.project_id,
+                       credentials=credentials)
+    LOGGER.info('DATA GBQ PARTERNS LEAD:')
+    LOGGER.info(data)
+    return data
 
 # Query data from blocket DB
 def source_data_blocket_partner_ads(params: ReadParams,
@@ -215,9 +231,9 @@ if __name__ == '__main__':
 
     LOGGER.info("Started extraction phase for: DATA_PARTNERS_LEADS")
     DATA_PARTNERS_LEADS =\
-        source_data_pulse_partners_leads(PARAMS,
-                                         CONFIG,
-                                         DATA_PARTNERS_ADS_LIST_ID)
+        source_data_gbq_partners_leads(PARAMS,
+                                       CONFIG,
+                                       DATA_PARTNERS_ADS_LIST_ID)
 
  ###################################################
  #                   TRANSFORM                     #

@@ -1,0 +1,21 @@
+# each folder has its own image
+
+---
+
+stages:
+  - build-docker
+  - deploy
+
+include:
+  - project: 'yapo_team/yotf/sre-team/sre-services/ci-templates/docker-pipeline-template'
+    ref: main
+    file: 'gitlab-ci.yml'
+  - project: 'yapo_team/yotf/sre-team/sre-services/ci-templates/rundeck-pipeline-template'
+    ref: main
+    file: 'gitlab-ci.yml'
+  - local: 'bounce-rate/.gitlab-ci.yml'
+  - local: 'buyer-return/.gitlab-ci.yml'
+  - local: 'content-metrics/.gitlab-ci.yml'
+  - local: 'massive-load/.gitlab-ci.yml'
+  - local: 'monitoring-data/.gitlab-ci.yml'
+  - local: 'traffic-metrics/.gitlab-ci.yml'

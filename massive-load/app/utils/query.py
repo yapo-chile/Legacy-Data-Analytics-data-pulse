@@ -1,3 +1,4 @@
+from datetime import datetime
 from infraestructure.conf import getConf
 from utils.read_params import ReadParams
 
@@ -39,32 +40,47 @@ class Query:
         """
         return query
 
-    def get_pulse_partners_leads(self, chunk) -> str:
+    def get_gbq_partners_leads(self, listIds) -> str:
         """
         Method return str with query
         """
-
-        listIdsStr = "'" + "','".join([str(x) for x in chunk]) + "'"
-
-        queryAthena = """
-        select
-            cast(date_parse(cast(year as varchar) || '-' || cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e') as date) timedate,
-            split_part(ad_id,':',4) list_id,
-            count(distinct case when event_type = 'View' and object_type = 'ClassifiedAd' then event_id end) number_of_views,
-            count(distinct case when event_type = 'Call' then event_id end) number_of_calls,
-            count(distinct case when event_type = 'Show' then event_id end) number_of_show_phone,
-            count(distinct case when event_type = 'Send' then environment_id end) number_of_ad_replies
-        from
-            yapocl_databox.insights_events_behavioral_fact_layer_365d
-        where
-            cast(date_parse(cast(year as varchar) || '-' || cast(month as varchar) || '-' || cast(day as varchar),'%Y-%c-%e') as date) = date '{0}'
-            and ad_id != 'sdrn:yapocl:classified:' and ad_id != 'sdrn:yapocl:classified:0'
-            and local_main_category in ('inmuebles','vehiculos','vehículos','veh韈ulos','veh�culos')
-            and split_part(ad_id,':',4) in ({1})
-        group by 1,2
-        order by 1,2
-        """.format(self.params.get_date_from(), listIdsStr)
-        return queryAthena
+        listIdsStr = "'" + "','".join([str(x) for x in listIds]) + "'"
+        get_date_from = datetime.strptime(self.params.get_date_from, '%Y-%m-%d').strftime('%Y%m%d')
+        return f"""
+    select 
+    * 
+    from 
+    (select 
+          PARSE_DATE("%Y%m%d", event_date) AS date,
+          cast(object_ad_id AS string) as list_id_nk,
+          count(case when event_name = 'Ad_phone_number_called' then event_name end)  as number_of_calls,
+          count(case when event_name = 'Ad_phone_number_displayed' then event_name end) as number_of_show_phone,
+          count(case when event_name = 'Ad_reply_submitted' then event_name end) as number_of_ad_replies,
+          count(case when event_name = 'Ad_phone_whatsapp_number_contacted' then event_name end) as number_of_call_whatsapp,
+          count (event_name) as leads
+    from `yapo-dat-prd.staging.leads_{get_date_from}`
+    WHERE
+        cast(object_ad_id as string) in ('{listIdsStr}')
+    and 
+         event_name in ('Ad_phone_number_called', 'Ad_phone_number_displayed', 'Ad_reply_submitted','Ad_phone_whatsapp_number_contacted', 'Ad phone_number called', 'Ad phone_number displayed', 'Ad reply submitted','Ad phone whatsapp_number_contacted')
+    and
+         category in (1000,2000)
+    group by 1,2) a
+    left join 
+    (select 
+          PARSE_DATE("%Y%m%d", event_date) AS date,
+          cast(object_ad_id AS string) as list_id_nk,
+          count(case when event_name in ('Ad_detail_viewed', 'Ad detail viewed') then event_name end) as number_of_views
+    from `yapo-dat-prd.staging.ad_views_{get_date_from}`
+    WHERE 
+        cast(object_ad_id as string) in ('{listIdsStr}')
+    and 
+        event_name in ('Ad_detail_viewed', 'Ad detail viewed')
+    and
+        category in (1000,2000)
+    group by 1,2) as c 
+    on a.date = c.date and a.list_id_nk = c.list_id_nk
+    order by 1,2"""
 
     def get_partner_ads(self) -> str:
         """
