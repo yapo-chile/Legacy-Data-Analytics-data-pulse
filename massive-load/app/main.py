@@ -46,18 +46,15 @@ def source_data_blocket(params: ReadParams,
     return data_blocket
 
 # Query data from Pulse bucket
-def source_data_pulse_partners_leads(params: ReadParams,
-                                     config: getConf,
-                                     listIds):
-    athena = Athena(conf=config.athenaConf)
+def source_data_gbq_partners_leads(params: ReadParams,
+                                   config: getConf,
+                                   listIds):
     query = Query(config, params)
-    data_athena = pd.DataFrame()
-    listIdsChunks = list(chunks(listIds, 10000))
-    for chunk in listIdsChunks:
-        df = athena.get_data(query.get_pulse_partners_leads(chunk))
-        data_athena = data_athena.append(df, ignore_index=True)
-    athena.close_connection()
-    return data_athena
+    LOGGER.info('QUERY GBQ PARTNERS LEAD: ' + str(query.get_gbq_partners_leads(listIds)))
+    data = pd.read_gbq(query.get_gbq_partners_leads(listIds), project_id='yapo-dat-prd')
+    LOGGER.info('DATA GBQ PARTERNS LEAD:')
+    LOGGER.info(data)
+    return data
 
 # Query data from blocket DB
 def source_data_blocket_partner_ads(params: ReadParams,
@@ -215,9 +212,9 @@ if __name__ == '__main__':
 
     LOGGER.info("Started extraction phase for: DATA_PARTNERS_LEADS")
     DATA_PARTNERS_LEADS =\
-        source_data_pulse_partners_leads(PARAMS,
-                                         CONFIG,
-                                         DATA_PARTNERS_ADS_LIST_ID)
+        source_data_gbq_partners_leads(PARAMS,
+                                       CONFIG,
+                                       DATA_PARTNERS_ADS_LIST_ID)
 
  ###################################################
  #                   TRANSFORM                     #
