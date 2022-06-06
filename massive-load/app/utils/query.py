@@ -43,7 +43,7 @@ class Query:
         """
         Method return str with query
         """
-        "','".join([str(x) for x in listIds]), "','".join([str(x) for x in listIds])
+        listIds_str = "','".join([str(x) for x in listIds]), "','".join([str(x) for x in listIds])
         return f"""
     select 
     * 
@@ -58,7 +58,7 @@ class Query:
           count (event_name) as leads
     from `yapo-dat-prd.staging.leads_{self.params.get_date_from}`
     WHERE
-        cast(object_ad_id as string) in ('{listIds}')
+        cast(object_ad_id as string) in ('{listIds_str}')
     and 
          event_name in ('Ad_phone_number_called', 'Ad_phone_number_displayed', 'Ad_reply_submitted','Ad_phone_whatsapp_number_contacted', 'Ad phone_number called', 'Ad phone_number displayed', 'Ad reply submitted','Ad phone whatsapp_number_contacted')
     and
@@ -71,7 +71,7 @@ class Query:
           count(case when event_name in ('Ad_detail_viewed', 'Ad detail viewed') then event_name end) as number_of_views
     from `yapo-dat-prd.staging.ad_views_{self.params.get_date_from}`
     WHERE 
-        cast(object_ad_id as string) in ('{listIds}')
+        cast(object_ad_id as string) in ('{listIds_str}')
     and 
         event_name in ('Ad_detail_viewed', 'Ad detail viewed')
     and
