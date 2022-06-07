@@ -66,13 +66,9 @@ def source_data_gbq_partners_leads(params: ReadParams,
     )
 
     query = Query(config, params)
-    LOGGER.info('QUERY GBQ PARTNERS LEAD:')
-    LOGGER.info(query.get_gbq_partners_leads(listIds))
     data = pd.read_gbq(query.get_gbq_partners_leads(listIds),
                        project_id=config.GBQConf.project_id,
                        credentials=credentials)
-    LOGGER.info('DATA GBQ PARTERNS LEAD:')
-    LOGGER.info(data)
     return data
 
 # Query data from blocket DB
