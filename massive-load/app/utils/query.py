@@ -44,7 +44,7 @@ class Query:
         """
         Method return str with query
         """
-        listIdsStr = "'" + "','".join([str(x) for x in listIds]) + "'"
+        listIdsStr = "','".join([str(x) for x in listIds])
         get_date_from = datetime.strptime(self.params.get_date_from, '%Y-%m-%d').strftime('%Y%m%d')
         return f"""
     select 
