@@ -133,7 +133,7 @@ class Query:
 
         adIdsStr = ",".join([str(x) for x in chunk])
 
-        queryBlocket ="""
+        queryBlocket = """
         select distinct
             a.ad_id,
             max(a.patente) patente,
