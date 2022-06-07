@@ -1,6 +1,6 @@
 - defaultTab: nodes
   description: |-
-        sudo docker pull containers.mpi-internal.com/yapo/data-pulse-massive-load:latest
+        sudo docker pull registry.gitlab.com/yapo_team/legacy/data-analytics/data-pulse:${IMAGE_TAG}
         
         sudo docker run -v /home/bnbiuser/secrets/pulse_auth:/app/pulse-secret \
                         -v /home/bnbiuser/secrets/dw_db:/app/db-secret \
@@ -12,7 +12,7 @@
                         -e APP_DW_SECRET=/app/db-secret \
                         -e APP_GBQ_SECRET=/app/gbq-secret \
                         -e APP_PICKLES=/app/pickles \
-                        containers.mpi-internal.com/yapo/data-pulse-massive-load:latest
+                        registry.gitlab.com/yapo_team/legacy/data-analytics/data-pulse:${IMAGE_TAG}
   executionEnabled: true
   group: PIPELINE-ANALIZER
   loglevel: DEBUG
@@ -53,7 +53,7 @@
   sequence:
     commands:
     - script: |-
-        sudo docker pull containers.mpi-internal.com/yapo/data-pulse-massive-load:latest
+        sudo docker pull registry.gitlab.com/yapo_team/legacy/data-analytics/data-pulse:${IMAGE_TAG}
         
         sudo docker run -v /home/bnbiuser/secrets/pulse_auth:/app/pulse-secret \
                         -v /home/bnbiuser/secrets/dw_db:/app/db-secret \
@@ -65,7 +65,7 @@
                         -e APP_DW_SECRET=/app/db-secret \
                         -e APP_GBQ_SECRET=/app/gbq-secret \
                         -e APP_PICKLES=/app/pickles \
-                        containers.mpi-internal.com/yapo/data-pulse-massive-load:latest
+                        registry.gitlab.com/yapo_team/legacy/data-analytics/data-pulse:${IMAGE_TAG}
     keepgoing: false
     strategy: node-first
   timeZone: America/Santiago

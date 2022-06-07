@@ -66,10 +66,14 @@ def source_data_gbq_partners_leads(params: ReadParams,
     )
 
     query = Query(config, params)
-    data = pd.read_gbq(query.get_gbq_partners_leads(listIds),
-                       project_id=config.GBQConf.project_id,
-                       credentials=credentials)
-    return data
+    data_gbq = pd.DataFrame()
+    listIdsChunks = list(chunks(listIds, 10000))
+    for chunk in listIdsChunks:
+        df = pd.read_gbq(query.get_gbq_partners_leads(chunk),
+                         project_id=config.GBQConf.project_id,
+                         credentials=credentials)
+        data_gbq = data_gbq.append(df, ignore_index=True)
+    return data_gbq
 
 # Query data from blocket DB
 def source_data_blocket_partner_ads(params: ReadParams,
