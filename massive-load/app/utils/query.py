@@ -52,7 +52,7 @@ class Query:
     from 
     (select 
           PARSE_DATE("%Y%m%d", event_date) AS date,
-          cast(object_ad_id AS string) as list_id_nk,
+          cast(object_ad_id AS string) as list_id,
           count(case when event_name = 'Ad_phone_number_called' then event_name end)  as number_of_calls,
           count(case when event_name = 'Ad_phone_number_displayed' then event_name end) as number_of_show_phone,
           count(case when event_name = 'Ad_reply_submitted' then event_name end) as number_of_ad_replies,
@@ -69,7 +69,7 @@ class Query:
     left join 
     (select 
           PARSE_DATE("%Y%m%d", event_date) AS date,
-          cast(object_ad_id AS string) as list_id_nk,
+          cast(object_ad_id AS string) as list_id,
           count(case when event_name in ('Ad_detail_viewed', 'Ad detail viewed') then event_name end) as number_of_views
     from `yapo-dat-prd.staging.ad_views_{get_date_from}`
     WHERE 
@@ -79,7 +79,7 @@ class Query:
     and
         category in (1000,2000)
     group by 1,2) as c 
-    on a.date = c.date and a.list_id_nk = c.list_id_nk
+    on a.date = c.date and a.list_id = c.list_id
     order by 1,2"""
 
     def get_partner_ads(self) -> str:
@@ -133,7 +133,7 @@ class Query:
 
         adIdsStr = ",".join([str(x) for x in chunk])
 
-        queryBlocket = """
+        queryBlocket ="""
         select distinct
             a.ad_id,
             max(a.patente) patente,
