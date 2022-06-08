@@ -51,7 +51,7 @@ class Query:
     * 
     from 
     (select 
-          PARSE_DATE("%Y%m%d", event_date) AS date,
+          PARSE_DATE("%Y%m%d", event_date) AS timedate,
           cast(object_ad_id AS string) as list_id,
           count(case when event_name = 'Ad_phone_number_called' then event_name end)  as number_of_calls,
           count(case when event_name = 'Ad_phone_number_displayed' then event_name end) as number_of_show_phone,
@@ -68,7 +68,7 @@ class Query:
     group by 1,2) a
     left join 
     (select 
-          PARSE_DATE("%Y%m%d", event_date) AS date,
+          PARSE_DATE("%Y%m%d", event_date) AS timedate,
           cast(object_ad_id AS string) as list_id,
           count(case when event_name in ('Ad_detail_viewed', 'Ad detail viewed') then event_name end) as number_of_views
     from `yapo-dat-prd.staging.ad_views_{get_date_from}`
@@ -79,7 +79,7 @@ class Query:
     and
         category in (1000,2000)
     group by 1,2) as c 
-    on a.date = c.date and a.list_id = c.list_id
+    on a.timedate = c.timedate and a.list_id = c.list_id
     order by 1,2"""
 
     def get_partner_ads(self) -> str:
