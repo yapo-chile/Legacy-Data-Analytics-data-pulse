@@ -48,7 +48,7 @@ class Query:
         date_from = datetime.strptime(str(self.params.get_date_from()), '%Y-%m-%d').strftime('%Y%m%d')
         date_to = datetime.strptime(str(self.params.get_date_to()), '%Y-%m-%d').strftime('%Y%m%d')
         return f"""
-    "select 
+    select 
         a.timedate,
         a.list_id,
         number_of_calls,
