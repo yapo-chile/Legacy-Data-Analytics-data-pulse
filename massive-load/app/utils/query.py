@@ -48,51 +48,38 @@ class Query:
         date_from = datetime.strptime(str(self.params.get_date_from()), '%Y-%m-%d').strftime('%Y%m%d')
         date_to = datetime.strptime(str(self.params.get_date_to()), '%Y-%m-%d').strftime('%Y%m%d')
         return f"""
-    select 
-        a.timedate,
-        a.list_id,
-        number_of_calls,
-        number_of_show_phone,
-        number_of_ad_replies,
-        number_of_call_whatsapp,
-        leads,
-        number_of_views
-    from 
-    (select 
-          PARSE_DATE("%Y%m%d", event_date) AS timedate,
-          cast(object_ad_id AS string) as list_id,
-          count(case when event_name = 'Ad_phone_number_called' then event_name end)  as number_of_calls,
-          count(case when event_name = 'Ad_phone_number_displayed' then event_name end) as number_of_show_phone,
-          count(case when event_name = 'Ad_reply_submitted' then event_name end) as number_of_ad_replies,
-          count(case when event_name = 'Ad_phone_whatsapp_number_contacted' then event_name end) as number_of_call_whatsapp,
-          count (event_name) as leads
-    from `{self.conf.GBQConf.project_id}.staging.leads_*`
-    WHERE _TABLE_SUFFIX  between '{date_from}' and '{date_to}'
-    and 
-        cast(object_ad_id as string) in ('{listIdsStr}')
-    and 
-         event_name in ('Ad_phone_number_called', 'Ad_phone_number_displayed', 'Ad_reply_submitted',
+select
+  PARSE_DATE("%Y%m%d", event_date) AS timedate,
+  (case 
+    WHEN 
+      (select value.int_value FROM UNNEST (event_params) WHERE key ='object_ad_id') is null then (select value.string_value FROM UNNEST (event_params) WHERE key ='object_ad_id')
+      else 
+      cast ((select value.int_value FROM UNNEST (event_params) WHERE key ='object_ad_id') as string)
+      end) as list_id,
+  count(case when event_name = 'Ad_phone_number_called' then event_name end)  as number_of_calls,
+  count(case when event_name = 'Ad_phone_number_displayed' then event_name end) as number_of_show_phone,
+  count(case when event_name = 'Ad_reply_submitted' then event_name end) as number_of_ad_replies,
+  count(case when event_name = 'Ad_phone_whatsapp_number_contacted' then event_name end) as number_of_call_whatsapp,
+  count(case when event_name = 'Ad_phone_number_called' then event_name end) + count(case when event_name = 'Ad_phone_number_displayed' then event_name end) + count(case when event_name = 'Ad_reply_submitted' then event_name end) + count(case when event_name = 'Ad_phone_whatsapp_number_contacted' then event_name end) as leads,
+  count(case when event_name in ('Ad_detail_viewed', 'Ad detail viewed') then event_name end) as number_of_views
+from 
+  `yapo-dat-prd.analytics_279907210.events_*`
+WHERE 
+     _TABLE_SUFFIX  between '{date_from}' and '{date_to}'
+and 
+  event_name in ('Ad_detail_viewed','Ad_phone_number_called', 'Ad_phone_number_displayed', 'Ad_reply_submitted',
          'Ad_phone_whatsapp_number_contacted', 'Ad phone_number called', 'Ad phone_number displayed', 
          'Ad reply submitted','Ad phone whatsapp_number_contacted')
-    and
-         category in (1000,2000)
-    group by 1,2) a
-    left join 
-    (select 
-          PARSE_DATE("%Y%m%d", event_date) AS timedate,
-          cast(object_ad_id AS string) as list_id,
-          count(case when event_name in ('Ad_detail_viewed', 'Ad detail viewed') then event_name end) as number_of_views
-    from `{self.conf.GBQConf.project_id}.staging.ad_views_*`
-    WHERE _TABLE_SUFFIX  between '{date_from}' and '{date_to}'
-    and 
-        cast(object_ad_id as string) in ('{listIdsStr}')
-    and 
-        event_name in ('Ad_detail_viewed', 'Ad detail viewed')
-    and
-        category in (1000,2000)
-    group by 1,2) as c 
-    on a.timedate = c.timedate and a.list_id = c.list_id
-    order by 1,2"""
+and
+  ((SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'object_categories_string') like '%1000%'
+  or (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'object_categories_string') like '%2000%')
+and (case 
+    WHEN 
+        (select value.int_value FROM UNNEST (event_params) WHERE key ='object_ad_id') is null then (select value.string_value FROM UNNEST (event_params) WHERE key ='object_ad_id')
+    else 
+        cast ((select value.int_value FROM UNNEST (event_params) WHERE key ='object_ad_id') as string)
+    end) in ('{listIdsStr}')
+    group by 1,2"""
 
     def get_partner_ads(self) -> str:
         """
