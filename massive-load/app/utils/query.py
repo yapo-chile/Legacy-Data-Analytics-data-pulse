@@ -45,10 +45,18 @@ class Query:
         Method return str with query
         """
         listIdsStr = "','".join([str(x) for x in listIds])
-        get_date_from = datetime.strptime(str(self.params.get_date_from()), '%Y-%m-%d').strftime('%Y%m%d')
+        date_from = datetime.strptime(str(self.params.get_date_from()), '%Y-%m-%d').strftime('%Y%m%d')
+        date_to = datetime.strptime(str(self.params.get_date_to()), '%Y-%m-%d').strftime('%Y%m%d')
         return f"""
-    select 
-    * 
+    "select 
+        a.timedate,
+        a.list_id,
+        number_of_calls,
+        number_of_show_phone,
+        number_of_ad_replies,
+        number_of_call_whatsapp,
+        leads,
+        number_of_views
     from 
     (select 
           PARSE_DATE("%Y%m%d", event_date) AS timedate,
@@ -58,11 +66,14 @@ class Query:
           count(case when event_name = 'Ad_reply_submitted' then event_name end) as number_of_ad_replies,
           count(case when event_name = 'Ad_phone_whatsapp_number_contacted' then event_name end) as number_of_call_whatsapp,
           count (event_name) as leads
-    from `yapo-dat-prd.staging.leads_{get_date_from}`
-    WHERE
+    from `{self.conf.GBQConf.project_id}.staging.leads_*`
+    WHERE _TABLE_SUFFIX  between '{date_from}' and '{date_to}'
+    and 
         cast(object_ad_id as string) in ('{listIdsStr}')
     and 
-         event_name in ('Ad_phone_number_called', 'Ad_phone_number_displayed', 'Ad_reply_submitted','Ad_phone_whatsapp_number_contacted', 'Ad phone_number called', 'Ad phone_number displayed', 'Ad reply submitted','Ad phone whatsapp_number_contacted')
+         event_name in ('Ad_phone_number_called', 'Ad_phone_number_displayed', 'Ad_reply_submitted',
+         'Ad_phone_whatsapp_number_contacted', 'Ad phone_number called', 'Ad phone_number displayed', 
+         'Ad reply submitted','Ad phone whatsapp_number_contacted')
     and
          category in (1000,2000)
     group by 1,2) a
@@ -71,8 +82,9 @@ class Query:
           PARSE_DATE("%Y%m%d", event_date) AS timedate,
           cast(object_ad_id AS string) as list_id,
           count(case when event_name in ('Ad_detail_viewed', 'Ad detail viewed') then event_name end) as number_of_views
-    from `yapo-dat-prd.staging.ad_views_{get_date_from}`
-    WHERE 
+    from `{self.conf.GBQConf.project_id}.staging.ad_views_*`
+    WHERE _TABLE_SUFFIX  between '{date_from}' and '{date_to}'
+    and 
         cast(object_ad_id as string) in ('{listIdsStr}')
     and 
         event_name in ('Ad_detail_viewed', 'Ad detail viewed')
@@ -416,9 +428,11 @@ class Query:
         """
         Method that returns events of the day
         """
-        command = """
-                    delete from ods.partners_leads where 
-                    timedate::date = 
-                    '""" + self.params.get_date_from() + """'::date """
+        command = f"""
+                    delete from ods.partners_leads 
+                        where 
+                    timedate::date 
+                        between '{self.params.get_date_from()}'::date 
+                        and '{self.params.get_date_to()}'::date"""
 
         return command
