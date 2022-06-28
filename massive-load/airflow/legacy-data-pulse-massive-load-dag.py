@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import json
+
 import requests
 from datetime import timedelta, datetime
 
@@ -73,12 +74,15 @@ with models.DAG(
             'output: dwh'],
         schedule_interval=None,
         default_args=default_args,
-        max_active_runs=1,
-        on_failure_callback=task_fail_slack_alert
+        on_failure_callback=task_fail_slack_alert,
+        max_active_runs=1
 ) as dag:
 
     def check_partition(**kwargs):
-        test = requests.get(f"{SERVICE_SENSOR_URL}/{kwargs['table']}")
+        test = requests.post(
+            f"{SERVICE_SENSOR_URL}/{kwargs['table']}",
+            json=kwargs['dates']
+        )
         return (
             True if json.loads(test.content)["body"]["status_table"] == "OK" else False
         )
@@ -110,7 +114,7 @@ with models.DAG(
             mode="reschedule",
             timeout=sensor_config_gbq["timeout"],
             python_callable=check_partition,
-            op_kwargs={"table": table},
+            op_kwargs={"table": table, "dates": get_date()},
         )
 
         check_table_partition_exists >> run_massive_load
