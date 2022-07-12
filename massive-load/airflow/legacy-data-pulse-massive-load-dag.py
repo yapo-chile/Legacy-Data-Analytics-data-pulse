@@ -17,7 +17,7 @@ from airflow.sensors.python import PythonSensor
 
 sensor_config_gbq = json.loads(Variable.get("SENSOR_CONFIG_GBQ"))
 SERVICE_SENSOR_URL = "https://py-scp-pipelines-healthchek-nasdocrtnq-ue.a.run.app"
-sshHook = SSHHook(ssh_conn_id="ssh_public_rundeck")
+sshHook = SSHHook(ssh_conn_id="ssh_public_pentaho")
 connect_dockerhost = Variable.get('CONNECT_DOCKERHOST')
 docker_image = Variable.get('DOCKER_IMAGE_DATA_PULSE_MASSIVE_LOAD')
 SLACK_CONN_ID = 'slack'
