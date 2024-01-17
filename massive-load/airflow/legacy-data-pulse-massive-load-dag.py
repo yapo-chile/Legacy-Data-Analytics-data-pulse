@@ -79,13 +79,20 @@ with models.DAG(
 ) as dag:
 
     def check_partition(**kwargs):
-        test = requests.post(
-            f"{SERVICE_SENSOR_URL}/{kwargs['table']}",
-            json=kwargs['dates']
-        )
-        return (
-            True if json.loads(test.content)["body"]["status_table"] == "OK" else False
-        )
+        try:
+            test = requests.get(f"{SERVICE_SENSOR_URL}/{kwargs['table']}")
+            content = json.loads(test.content)
+            status_table = content["body"]["status_table"]
+
+            if status_table == "OK":
+                return True
+            elif status_table == "FAILED":
+                return False
+            else:
+                return False
+        except json.decoder.JSONDecodeError:
+            return False
+        
 
     run_massive_load = SSHOperator(
         task_id="run_massive_load",
